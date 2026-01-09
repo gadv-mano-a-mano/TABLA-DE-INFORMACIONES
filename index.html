@@ -2,96 +2,98 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>InfoBoard</title>
-  <link rel="stylesheet" href="./styles/base.css">
+
+  <link rel="stylesheet" href="./styles/main.css" />
 </head>
 
-<body data-screen="board">
-  <!-- BOARD -->
-  <div id="boardScreen">
-    <div class="wrap">
-      <div class="panel">
-        <div class="panelInner">
-          <div class="topbar">
-            <div class="brand">
-              <div class="badgeSquare">i</div>
-              <div>INFO BOARD</div>
-            </div>
+<body>
+  <div class="page-wrap">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon">i</div>
+        <div class="brand-title">INFO BOARD</div>
+      </div>
 
-            <div class="controlsRow">
-              <button id="btnRefreshCarousel" class="btn btnPrimary" type="button" title="Actualizar carrusel">↻</button>
-              <button id="btnFs" class="btn fsbtn" type="button" aria-label="Pantalla completa" title="Pantalla completa">⛶</button>
-            </div>
+      <div class="center-controls">
+        <!-- Botones opcionales (si tu JS ya los usa) -->
+        <button class="btn icon-btn" id="btnCarousel" title="Carousel">↻</button>
+        <button class="btn icon-btn" id="btnFullscreen" title="Pantalla completa">⤢</button>
+      </div>
 
-            <div class="rightInfo">
-              <div id="now">—</div>
-              <div>Auto-refresh: <span id="refreshEvery">—</span>s</div>
-              <div class="muted" id="carouselStatus">—</div>
-            </div>
-          </div>
+      <div class="topbar-right">
+        <div class="small" id="nowText">—</div>
+        <div class="small" id="refreshText">Auto-refresh: 30s</div>
+        <div class="small" id="carouselStatus">Carousel: sin manifest (ok si aún no creaste)</div>
+      </div>
+    </header>
 
-          <!-- PROYECTOS -->
-          <div class="sectionTitle">PROYECTOS</div>
-          <div class="tableCard">
-            <table>
+    <main class="board">
+      <div class="board-panels">
+
+        <!-- PROYECTOS -->
+        <section class="board-panel">
+          <h2 class="section-title">PROYECTOS</h2>
+
+          <div class="table-wrap">
+            <table class="data-table projects-table" id="projectsTable">
               <thead>
                 <tr>
                   <th>INSTITUCION</th>
                   <th>PROGRAMAS</th>
-                  <th class="num" style="width:140px;">PROYECTOS</th>
-                  <th style="width:170px;">ESTADO</th>
+                  <th>PROYECTOS</th>
+                  <th>ESTADO</th>
                 </tr>
               </thead>
-              <tbody id="rowsProjects"></tbody>
+              <tbody id="projectsBody">
+                <!-- lo llena public.js -->
+              </tbody>
             </table>
-            <div class="footerBar">
-              <div class="muted" id="errProjects" style="display:none;"></div>
-              <div></div>
-            </div>
           </div>
 
-          <!-- VUELOS -->
-          <div class="sectionTitle" style="margin-top:18px;">VUELOS</div>
-          <div class="tableCard">
-            <table>
+          <div class="panel-footer">
+            <div>Last update: <span id="lastUpdate">—</span></div>
+            <div>Proyectos: <span id="projectsCount">0</span> | Vuelos: <span id="flightsCount">0</span></div>
+          </div>
+        </section>
+
+        <!-- VUELOS -->
+        <section class="board-panel">
+          <h2 class="section-title">VUELOS</h2>
+
+          <div class="table-wrap">
+            <table class="data-table flights-table" id="flightsTable">
               <thead>
                 <tr>
-                  <th style="width:140px;">FECHA</th>
-                  <th style="width:220px;">AERONAVE</th>
-                  <th style="width:240px;">TIPO DE VUELO</th>
+                  <th>FECHA</th>
+                  <th>AERONAVE</th>
+                  <th>TIPO DE VUELO</th>
                   <th>DESTINO</th>
-                  <th style="width:190px;">HORA DE SALIDA</th>
+                  <th>HORA DE SALIDA</th>
                 </tr>
               </thead>
-              <tbody id="rowsFlights"></tbody>
+              <tbody id="flightsBody">
+                <!-- lo llena public.js -->
+              </tbody>
             </table>
-
-            <div class="footerBar">
-              <div>Last update: <span id="lastUpdate">—</span></div>
-              <div>Proyectos: <span id="countProjects">0</span> | Vuelos: <span id="countFlights">0</span></div>
-            </div>
-
-            <div id="errFlights" class="error"></div>
           </div>
-        </div>
+
+          <div class="panel-footer">
+            <div>&nbsp;</div>
+            <div>&nbsp;</div>
+          </div>
+        </section>
+
       </div>
-    </div>
+    </main>
   </div>
 
-  <!-- MEDIA -->
-  <div id="mediaScreen">
-    <div id="mediaInner">
-      <img id="mediaImg" alt="Carrusel" />
-      <video id="mediaVideo"></video>
-
-      <div id="mediaLoading">
-        <span>Cargando…</span>
-        <div class="bar"><i></i></div>
-      </div>
-    </div>
-  </div>
-
-  <script type="module" src="./scripts/public.js"></script>
+  <!-- Tus scripts existentes -->
+  <script src="./config.js"></script>
+  <script src="./scripts/firebase.js"></script>
+  <script src="./scripts/manifest.js"></script>
+  <script src="./scripts/public.js"></script>
 </body>
 </html>
