@@ -288,3 +288,40 @@ td.estadoCell{
 /* Evitar scrollbars visibles en cualquier lugar */
 *::-webkit-scrollbar{ width:0; height:0; }
 *{ scrollbar-width: none; }
+/* ===== Layout split (PROYECTOS / VUELOS) ===== */
+body[data-screen="board"] #boardScreen{
+  height: 100vh;
+}
+
+body[data-screen="board"] #boardScreen .wrap{
+  /* importante por el scale: evita recorte */
+  height: calc(100vh / var(--tv-scale));
+  display: flex;
+  flex-direction: column;
+}
+
+/* contenedor de ambos paneles */
+body[data-screen="board"] .boards{
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;      /* separación entre paneles */
+  min-height: 0;  /* clave para que flex no “corte” */
+}
+
+/* quita el margin-top que ya no hace falta en modo split */
+body[data-screen="board"] .boards .board{
+  margin-top: 0;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* proporciones: PROYECTOS 45% / VUELOS 55% */
+body[data-screen="board"] .boards .board.projects{
+  flex: 45 1 0;
+}
+
+body[data-screen="board"] .boards .board.flights{
+  flex: 55 1 0;
+}
+
