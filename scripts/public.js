@@ -5,7 +5,7 @@ const PROJECTS_CSV_URL = CONFIG.sheets.projectsCsv;
 const FLIGHTS_CSV_URL  = CONFIG.sheets.flightsCsv;
 
 const REFRESH_SECONDS = CONFIG.refreshSeconds;
-const MAX_SHOW = CONFIG.maxShow; // 7
+const MAX_SHOW = CONFIG.maxShow;
 
 // UI
 const rowsProjects = document.getElementById("rowsProjects");
@@ -35,23 +35,26 @@ let manifestCache = null;
 let urlCache = new Map(); // key: path|buster -> url
 let audioUnlocked = false;
 
-// Mantener último dato bueno (evita que la tabla “desaparezca” si falla fetch)
-let lastGoodProjects = null;
-let lastGoodFlights = null;
+let isLoading = false;
 
-/* ========= Clock ========= */
+// cache “último dato bueno” (para que no se vea vacío si falla fetch)
+let lastGoodProjects = null;
+let lastGoodFlights  = null;
+
+// Clock
 function tickClock(){
   const d = new Date();
-  document.getElementById("now").textContent =
-    d.toLocaleString(undefined, {
-      weekday:"short", year:"numeric", month:"short", day:"2-digit",
-      hour:"2-digit", minute:"2-digit"
-    });
+  const now = document.getElementById("now");
+  if (!now) return;
+  now.textContent = d.toLocaleString(undefined, {
+    weekday:"short", year:"numeric", month:"short", day:"2-digit",
+    hour:"2-digit", minute:"2-digit"
+  });
 }
 setInterval(tickClock, 1000);
 tickClock();
 
-/* ========= CSV helpers ========= */
+// Helpers
 function safe(v){ return (v ?? "").toString().trim(); }
 
 function normHeader(h){
@@ -86,6 +89,58 @@ function parseCSV(text){
   return rows;
 }
 
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+async function fetchWithRetry(url, { retries = 2, timeoutMs = 9000 } = {}){
+  let lastErr = null;
+
+  for (let attempt = 0; attempt <= retries; attempt++){
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), timeoutMs);
+
+    try{
+      // Cache-buster suave (evita HTML viejo / pero no rompe tanto)
+      const finalUrl = url + (url.includes("?") ? "&" : "?") + "t=" + Math.floor(Date.now()/10000);
+
+      const res = await fetch(finalUrl, {
+        cache: "no-store",
+        signal: controller.signal
+      });
+
+      if (!res.ok) throw new Error("HTTP " + res.status);
+
+      const text = await res.text();
+      const trimmed = text.trim();
+
+      if (trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html")){
+        throw new Error("Google devolvió HTML (revisa Publish to web / permisos).");
+      }
+      return text;
+    } catch(e){
+      lastErr = e;
+      // backoff corto
+      if (attempt < retries){
+        await sleep(350 + attempt * 450);
+      }
+    } finally {
+      clearTimeout(t);
+    }
+  }
+
+  throw lastErr || new Error("Failed to fetch");
+}
+
+async function loadCSV(url){
+  const text = await fetchWithRetry(url, { retries: 2, timeoutMs: 9000 });
+  const data = parseCSV(text);
+  if (!data.length) throw new Error("CSV vacío.");
+
+  const headersRaw = data[0];
+  const headersNorm = headersRaw.map(normHeader);
+  const rows = data.slice(1).filter(r => r.some(c => safe(c) !== ""));
+  return { headersRaw, headersNorm, rows };
+}
+
 function requireIdx(headersNorm, candidates, label, headersRaw){
   for (const c of candidates){
     const i = headersNorm.indexOf(c);
@@ -98,125 +153,48 @@ function requireIdx(headersNorm, candidates, label, headersRaw){
   );
 }
 
-/* ========= Fetch robusto (reintentos + timeout) ========= */
-async function fetchWithTimeout(url, ms = 10000){
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), ms);
-  try{
-    const res = await fetch(url, { cache:"no-store", signal: ctrl.signal });
-    return res;
-  } finally {
-    clearTimeout(t);
-  }
-}
-
-async function fetchRetry(url, retries = 2, baseDelayMs = 700){
-  let lastErr = null;
-  for (let attempt = 0; attempt <= retries; attempt++){
-    try{
-      const res = await fetchWithTimeout(url, 10000);
-      return res;
-    } catch(e){
-      lastErr = e;
-      const delay = baseDelayMs * Math.pow(1.6, attempt);
-      await new Promise(r => setTimeout(r, delay));
-    }
-  }
-  throw lastErr || new Error("Failed to fetch");
-}
-
-async function loadCSV(url){
-  const finalUrl = url + (url.includes("?") ? "&" : "?") + "t=" + Date.now();
-  const res = await fetchRetry(finalUrl, 2, 650);
-  if (!res.ok) throw new Error("No se pudo cargar el CSV: " + res.status);
-
-  const text = await res.text();
-
-  // Si Google devuelve HTML, no está publicado como CSV
-  const t = text.trim();
-  if (t.startsWith("<!DOCTYPE") || t.startsWith("<html")){
-    throw new Error("Google devolvió HTML (no CSV). Revisa Publish to web + permisos.");
-  }
-
-  const data = parseCSV(text);
-  if (!data.length) throw new Error("CSV vacío.");
-
-  const headersRaw = data[0];
-  const headersNorm = headersRaw.map(normHeader);
-  const rows = data.slice(1).filter(r => r.some(c => safe(c) !== ""));
-  return { headersRaw, headersNorm, rows };
-}
-
-/* ========= Render helpers ========= */
 function statusPill(txt){
   const t = safe(txt).toUpperCase();
-  const label = t || "—";
-  return `<span class="status">${label}</span>`;
+  if (t.includes("COMPLET")) return `<span class="status">${t}</span>`;
+  if (t.includes("CANCEL")) return `<span class="status">${t}</span>`;
+  if (t.includes("DELAY"))  return `<span class="status">${t}</span>`;
+  return `<span class="status">${t || "—"}</span>`;
 }
 
 function takeLatest(rows){
   return rows.slice(-MAX_SHOW).reverse();
 }
 
-function padTo(arr, n){
-  const out = arr.slice(0, n);
-  while(out.length < n) out.push(null);
-  return out;
-}
-
-function setError(el, msg){
-  el.textContent = msg;
-  el.style.display = "block";
-}
-function clearError(el){
-  el.textContent = "";
-  el.style.display = "none";
-}
-
-/* ========= Projects ========= */
 function renderProjects(headersNorm, headersRaw, rows){
-  clearError(errProjects);
+  errProjects.style.display = "none";
+
+  const iInst  = requireIdx(headersNorm, ["institucion","institution"], "PROYECTOS/INSTITUCION", headersRaw);
+  const iProg  = requireIdx(headersNorm, ["programas","programa","programs"], "PROYECTOS/PROGRAMAS", headersRaw);
+  const iProy  = requireIdx(headersNorm, ["proyectos","proyecto","projects","project"], "PROYECTOS/PROYECTOS", headersRaw);
+  const iEst   = requireIdx(headersNorm, ["estado","status"], "PROYECTOS/ESTADO", headersRaw);
+
+  const latest = takeLatest(rows);
   rowsProjects.innerHTML = "";
-
-  const iInst = requireIdx(headersNorm, ["institucion","institution"], "PROYECTOS/INSTITUCION", headersRaw);
-  const iProg = requireIdx(headersNorm, ["programas","programa","programs"], "PROYECTOS/PROGRAMAS", headersRaw);
-  const iProy = requireIdx(headersNorm, ["proyectos","proyecto","projects","project"], "PROYECTOS/PROYECTOS", headersRaw);
-  const iEst  = requireIdx(headersNorm, ["estado","status"], "PROYECTOS/ESTADO", headersRaw);
-
-  const latest = padTo(takeLatest(rows), MAX_SHOW);
 
   for (const r of latest){
     const tr = document.createElement("tr");
-
-    if (!r){
-      tr.innerHTML = `
-        <td>&nbsp;</td>
-        <td class="center">&nbsp;</td>
-        <td class="right">&nbsp;</td>
-        <td class="right">&nbsp;</td>
-      `;
-    } else {
-      const inst = safe(r[iInst]) || "—";
-      const prog = safe(r[iProg]) || "—";
-      const proy = safe(r[iProy]) || "—";
-      tr.innerHTML = `
-        <td title="${inst}">${inst}</td>
-        <td class="center" title="${prog}">${prog}</td>
-        <td class="right" title="${proy}">${proy}</td>
-        <td class="right">${statusPill(r[iEst])}</td>
-      `;
-    }
-
+    const inst = safe(r[iInst]) || "—";
+    const prog = safe(r[iProg]) || "—";
+    const proy = safe(r[iProy]) || "—";
+    tr.innerHTML = `
+      <td title="${inst}">${inst}</td>
+      <td title="${prog}">${prog}</td>
+      <td class="num" title="${proy}">${proy}</td>
+      <td>${statusPill(r[iEst])}</td>
+    `;
     rowsProjects.appendChild(tr);
   }
 
   countProjects.textContent = rows.length;
 }
 
-/* ========= Flights ========= */
 function renderFlights(headersNorm, headersRaw, rows){
-  clearError(errFlights);
-  rowsFlights.innerHTML = "";
+  errFlights.style.display = "none";
 
   const iFecha = requireIdx(headersNorm, ["fecha","date"], "VUELOS/FECHA", headersRaw);
   const iAer   = requireIdx(headersNorm, ["aeronave","aircraft","plane"], "VUELOS/AERONAVE", headersRaw);
@@ -224,77 +202,72 @@ function renderFlights(headersNorm, headersRaw, rows){
   const iDest  = requireIdx(headersNorm, ["destino","destination"], "VUELOS/DESTINO", headersRaw);
   const iHora  = requireIdx(headersNorm, ["hora_de_salida","hora_salida","hora","std","time"], "VUELOS/HORA DE SALIDA", headersRaw);
 
-  const latest = padTo(takeLatest(rows), MAX_SHOW);
+  const latest = takeLatest(rows);
+  rowsFlights.innerHTML = "";
 
   for (const r of latest){
     const tr = document.createElement("tr");
-
-    if (!r){
-      tr.innerHTML = `
-        <td>&nbsp;</td>
-        <td class="center">&nbsp;</td>
-        <td class="center">&nbsp;</td>
-        <td class="center">&nbsp;</td>
-        <td class="right">&nbsp;</td>
-      `;
-    } else {
-      const fecha = safe(r[iFecha]) || "—";
-      const aer   = safe(r[iAer]) || "—";
-      const tipo  = safe(r[iTipo]) || "—";
-      const dest  = safe(r[iDest]) || "—";
-      const hora  = safe(r[iHora]) || "—";
-
-      tr.innerHTML = `
-        <td title="${fecha}">${fecha}</td>
-        <td class="center" title="${aer}">${aer}</td>
-        <td class="center" title="${tipo}">${tipo}</td>
-        <td class="center" title="${dest}">${dest}</td>
-        <td class="right" title="${hora}">${hora}</td>
-      `;
-    }
-
+    tr.innerHTML = `
+      <td title="${safe(r[iFecha])}">${safe(r[iFecha]) || "—"}</td>
+      <td title="${safe(r[iAer])}">${safe(r[iAer]) || "—"}</td>
+      <td title="${safe(r[iTipo])}">${safe(r[iTipo]) || "—"}</td>
+      <td title="${safe(r[iDest])}">${safe(r[iDest]) || "—"}</td>
+      <td title="${safe(r[iHora])}">${safe(r[iHora]) || "—"}</td>
+    `;
     rowsFlights.appendChild(tr);
   }
 
   countFlights.textContent = rows.length;
 }
 
-/* ========= Load all (robusto) ========= */
 async function loadAll(){
-  // Projects
-  try{
-    const p = await loadCSV(PROJECTS_CSV_URL);
-    lastGoodProjects = p;
-    renderProjects(p.headersNorm, p.headersRaw, p.rows);
-  } catch(e){
-    // Si ya tenemos data buena, NO borramos la tabla (solo avisamos suave)
-    if (!lastGoodProjects){
-      rowsProjects.innerHTML = "";
-      countProjects.textContent = "0";
-    }
-    setError(errProjects, "Error de conexión (proyectos). Reintentando…");
-  }
+  if (isLoading) return;
+  isLoading = true;
 
-  // Flights
-  try{
-    const f = await loadCSV(FLIGHTS_CSV_URL);
-    lastGoodFlights = f;
-    renderFlights(f.headersNorm, f.headersRaw, f.rows);
-  } catch(e){
-    if (!lastGoodFlights){
-      rowsFlights.innerHTML = "";
-      countFlights.textContent = "0";
-    }
-    setError(errFlights, "Error de conexión (vuelos). Reintentando…");
-  }
+  let okAny = false;
 
-  // Last update siempre
-  elLast.textContent = new Date().toLocaleTimeString(undefined, {
-    hour:"2-digit", minute:"2-digit", second:"2-digit"
-  });
+  try{
+    try{
+      const p = await loadCSV(PROJECTS_CSV_URL);
+      lastGoodProjects = p;
+      renderProjects(p.headersNorm, p.headersRaw, p.rows);
+      okAny = true;
+    } catch(e){
+      // NO borrar tabla si ya había data buena
+      if (!lastGoodProjects){
+        rowsProjects.innerHTML = "";
+        countProjects.textContent = "0";
+      }
+      errProjects.textContent = "Error (Proyectos): " + (e?.message || e);
+      errProjects.style.display = "block";
+    }
+
+    try{
+      const f = await loadCSV(FLIGHTS_CSV_URL);
+      lastGoodFlights = f;
+      renderFlights(f.headersNorm, f.headersRaw, f.rows);
+      okAny = true;
+    } catch(e){
+      if (!lastGoodFlights){
+        rowsFlights.innerHTML = "";
+        countFlights.textContent = "0";
+      }
+      errFlights.textContent = "Error (Vuelos): " + (e?.message || e);
+      errFlights.style.display = "block";
+    }
+
+    // Solo actualiza “Last update” si al menos una tabla pudo refrescar
+    if (okAny){
+      elLast.textContent = new Date().toLocaleTimeString(undefined, {
+        hour:"2-digit", minute:"2-digit", second:"2-digit"
+      });
+    }
+  } finally {
+    isLoading = false;
+  }
 }
 
-/* ========= Fullscreen ========= */
+/* Fullscreen */
 function isFullscreen(){
   return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
 }
@@ -309,15 +282,22 @@ function exitFs(){
   if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
   if (document.msExitFullscreen) return document.msExitFullscreen();
 }
+function updateFsBtn(){
+  const fs = !!isFullscreen();
+  document.body.classList.toggle("is-fs", fs);
+}
 btnFs?.addEventListener("click", async () => {
   try{
     audioUnlocked = true;
     if (!isFullscreen()) await requestFs(document.documentElement);
     else await exitFs();
-  }catch(_){}
+    updateFsBtn();
+  } catch(_){}
 });
+document.addEventListener("fullscreenchange", updateFsBtn);
+updateFsBtn();
 
-/* ========= Manifest / playlist ========= */
+/* Manifest / playlist */
 function withBuster(url, buster){
   if (!buster) return url;
   return url + (url.includes("?") ? "&" : "?") + "v=" + encodeURIComponent(buster);
@@ -356,13 +336,12 @@ async function refreshManifestOnce(){
     manifestCache = m;
     urlCache.clear();
     carouselStatus.textContent = "Carrusel OK";
-  }catch(_){
+  } catch(_){
     manifestCache = null;
     carouselStatus.textContent = "Carrusel: sin manifest (ok si aún no creaste)";
   }
 }
 
-/* ========= Board/media switching ========= */
 function stopBoardRefresh(){
   if (boardRefreshTimer){
     clearInterval(boardRefreshTimer);
@@ -384,7 +363,6 @@ function stopMedia(){
   mediaVideo.removeAttribute("src");
   mediaVideo.load();
 }
-
 function showBoard(){
   document.body.dataset.screen = "board";
   mediaScreen.style.display = "none";
@@ -442,13 +420,13 @@ async function showMedia(item){
   try{
     await mediaVideo.play();
     mediaLoading.style.display = "none";
-  }catch(_){
+  } catch(_){
     try{
       mediaVideo.muted = true;
       await mediaVideo.play();
       mediaLoading.querySelector("span").textContent =
-        audioUnlocked ? "Reproduciendo (audio bloqueado)" : "Audio bloqueado: presiona ⛶";
-    }catch(_e){
+        audioUnlocked ? "Reproduciendo (audio bloqueado)" : "Audio bloqueado: presiona pantalla completa";
+    } catch(_e){
       mediaLoading.querySelector("span").textContent = "Error reproduciendo video";
     }
   }
@@ -457,7 +435,7 @@ async function showMedia(item){
     mediaVideo.onended = () => next();
     const safetyMs = Math.min(Math.max((mediaVideo.duration || 20) * 1000 + 1500, 8000), 180000);
     scheduleNext(safetyMs);
-  }else{
+  } else {
     scheduleNext(item.durationMs || 10000);
   }
 }
@@ -480,13 +458,12 @@ async function next(){
 
   try{
     await showMedia(item);
-  }catch(_){
+  } catch(_){
     showBoard();
     scheduleNext(CONFIG.boardDurationMs);
   }
 }
 
-// Botón: actualizar carrusel (manual)
 btnRefreshCarousel?.addEventListener("click", async () => {
   btnRefreshCarousel.disabled = true;
   try{
@@ -496,18 +473,17 @@ btnRefreshCarousel?.addEventListener("click", async () => {
   }
 });
 
-/* ========= Start ========= */
+// Start
 async function start(){
   showBoard();
 
   if (CONFIG.readManifestOnStartup) {
     await refreshManifestOnce(); // 1 sola vez al inicio
   } else {
-    carouselStatus.textContent = "Carrusel: manual (↻)";
+    carouselStatus.textContent = "Carrusel: manual";
   }
 
   currentIndex = 0;
   scheduleNext(CONFIG.boardDurationMs);
 }
-
 start();
