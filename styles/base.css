@@ -400,3 +400,129 @@ input, select{
   th, td{ padding: 10px 10px; }
   .wrap{ padding: 14px; }
 }
+
+
+.data-table {
+  width: 100%;
+  table-layout: fixed;            /* clave para que respete anchos */
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.data-table th,
+.data-table td {
+  padding: 14px 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Encabezados: heredan alineación definida por columna */
+.data-table thead th {
+  text-align: inherit;
+}
+
+/* Separación visual sutil entre columnas (opcional pero ayuda a “leer” columnas) */
+.data-table th + th,
+.data-table td + td {
+  border-left: 1px solid rgba(255,255,255,0.06);
+}
+
+/* =========================
+   PROYECTOS (4 columnas)
+   Orden esperado:
+   1 Institución | 2 Programas | 3 Proyectos | 4 Estado
+   ========================= */
+
+.projects-table th:nth-child(1),
+.projects-table td:nth-child(1) {
+  width: 32%;
+  text-align: left;
+}
+
+.projects-table th:nth-child(2),
+.projects-table td:nth-child(2) {
+  width: 38%;
+  text-align: center; /* antes se veía “pegado a la izq” -> lo centramos */
+}
+
+.projects-table th:nth-child(3),
+.projects-table td:nth-child(3) {
+  width: 12%;
+  text-align: right;  /* lo dejamos como te gusta: bien pegado a la derecha */
+}
+
+.projects-table th:nth-child(4),
+.projects-table td:nth-child(4) {
+  width: 18%;
+  text-align: right;  /* “Estado” queda ordenado al final */
+}
+
+/* =========================
+   VUELOS (5 columnas)
+   Orden esperado:
+   1 Fecha | 2 Aeronave | 3 Tipo | 4 Destino | 5 Hora
+   ========================= */
+
+.flights-table th:nth-child(1),
+.flights-table td:nth-child(1) {
+  width: 14%;
+  text-align: left;
+}
+
+.flights-table th:nth-child(2),
+.flights-table td:nth-child(2) {
+  width: 18%;
+  text-align: center;
+}
+
+.flights-table th:nth-child(3),
+.flights-table td:nth-child(3) {
+  width: 28%;
+  text-align: center;
+}
+
+.flights-table th:nth-child(4),
+.flights-table td:nth-child(4) {
+  width: 28%;
+  text-align: center; /* DESTINO deja de verse “metido” en Tipo */
+}
+
+.flights-table th:nth-child(5),
+.flights-table td:nth-child(5) {
+  width: 12%;
+  text-align: right;
+}
+
+/* =========================
+   MISMO ALTO: PROYECTOS y VUELOS
+   ========================= */
+
+/* El contenedor que envuelve ambas secciones */
+.board-panels {
+  display: grid;
+  grid-template-rows: 1fr 1fr; /* mismo alto */
+  gap: 18px;
+  height: calc(100vh - 140px); /* ajusta si tu header/topbar mide distinto */
+}
+
+/* Cada panel debe poder encogerse y permitir scroll interno */
+.board-panel {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.board-panel .table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto; /* si una tabla tiene más filas, scrollea dentro */
+}
+
+/* En pantallas pequeñas: mejor que no obligue 50/50 */
+@media (max-width: 900px) {
+  .board-panels {
+    grid-template-rows: auto auto;
+    height: auto;
+  }
+}
