@@ -1,45 +1,42 @@
 :root{
-  /* Ajusta si la TV recorta (0.94 / 0.92) */
-  --tv-scale: 0.96;
+  /* Si tu pantalla/TV recorta bordes, baja a 0.90 / 0.88 */
+  --tv-scale: 0.92;
 
-  --bg: #070707;
+  --bg: #0a0a0a;
   --panel: rgba(18,18,18,.72);
-  --panel-2: rgba(12,12,12,.78);
-
+  --panel-2: rgba(14,14,14,.78);
   --stroke: rgba(255,255,255,.10);
-  --stroke-2: rgba(255,255,255,.14);
+  --stroke-2: rgba(255,255,255,.06);
 
-  --text: #f2f2f2;
-  --muted: rgba(255,255,255,.70);
+  --text: rgba(255,255,255,.92);
+  --muted: rgba(255,255,255,.62);
 
-  --gold: #f3b400;
-  --green: #00ffb2;
+  --gold: #f6b700;
 
-  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --pill-bg: rgba(0, 255, 140, .12);
+  --pill-stroke: rgba(0, 255, 140, .35);
+  --pill-text: rgba(0, 255, 140, .92);
+
+  --radius: 22px;
 }
 
 *{ box-sizing:border-box; }
 html,body{ height:100%; }
+
 body{
   margin:0;
-  color:var(--text);
-  background:
-    radial-gradient(1200px 600px at 20% 0%, rgba(255,255,255,.06), transparent 60%),
-    radial-gradient(900px 500px at 80% 20%, rgba(255,255,255,.045), transparent 60%),
-    linear-gradient(#050505, #0a0a0a);
+  background: radial-gradient(1200px 600px at 50% 0%, rgba(255,255,255,.10), transparent 60%),
+              radial-gradient(900px 500px at 10% 30%, rgba(255,255,255,.06), transparent 65%),
+              radial-gradient(900px 500px at 90% 40%, rgba(255,255,255,.06), transparent 65%),
+              var(--bg);
+  color: var(--text);
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
+  /* IMPORTANTE: quita scrollbar “guía” del lado derecho */
+  overflow: hidden;
 }
 
-/* Evitar “guías”/scrollbars visibles */
-*{
-  scrollbar-width: none; /* Firefox */
-}
-*::-webkit-scrollbar{
-  width: 0px;
-  height: 0px;
-}
-
-/* TV safe scale (solo pantalla pública/tablas) */
+/* TV safe scale */
 body[data-screen="board"] #boardScreen .wrap{
   transform: scale(var(--tv-scale));
   transform-origin: top left;
@@ -47,9 +44,9 @@ body[data-screen="board"] #boardScreen .wrap{
 }
 
 .wrap{
-  max-width: 1500px;
+  max-width: min(1500px, calc(100vw - 24px));
   margin: 0 auto;
-  padding: 18px;
+  padding: 12px; /* un poco menos para evitar recorte */
 }
 
 /* HEADER */
@@ -66,266 +63,207 @@ body[data-screen="board"] #boardScreen .wrap{
   border: 1px solid var(--stroke);
   box-shadow:
     0 18px 40px rgba(0,0,0,.55),
-    inset 0 1px 0 rgba(255,255,255,.06);
+    inset 0 1px 0 rgba(255,255,255,.05);
 }
 
 .title{
   display:flex;
   align-items:center;
-  gap: 12px;
-  font-weight: 900;
-  letter-spacing: 2px;
+  gap:12px;
+
+  font-weight: 800;
+  letter-spacing: .12em;
   text-transform: uppercase;
 }
 
 .badge{
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   border-radius: 12px;
   display:grid;
   place-items:center;
 
-  background: rgba(255,196,0,.95);
-  color:#101010;
-  font-weight: 1000;
-  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(246,183,0,.14);
+  border: 1px solid rgba(246,183,0,.35);
+  color: var(--gold);
+  font-weight: 900;
 }
 
 .meta{
   text-align:right;
   font-size: 12px;
   color: var(--muted);
-  line-height: 1.35;
+  line-height: 1.25;
 }
 
-.muted{ color: rgba(255,255,255,.62); }
+.muted{ color: var(--muted); }
 
 .headerBtns{
   display:flex;
+  gap:10px;
   align-items:center;
-  gap: 10px;
-  margin-top: 2px;
-}
-
-/* Botones tipo “icono” */
-.fsbtn, .btn{
-  border-radius: 12px;
-  border: 1px solid var(--stroke);
-  background: rgba(25,25,25,.72);
-  color: #fff;
-  cursor: pointer;
-  box-shadow:
-    0 10px 24px rgba(0,0,0,.35),
-    inset 0 1px 0 rgba(255,255,255,.06);
+  justify-content:center;
 }
 
 .fsbtn{
   width: 44px;
-  height: 40px;
-  display:grid;
-  place-items:center;
-  font-size: 18px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--stroke);
+  color: var(--text);
+  cursor:pointer;
+  font-size: 16px;
 }
 
 .btn{
-  padding: 10px 14px;
-  font-weight: 700;
-}
-
-.btn.primary{
-  background: rgba(255,196,0,.92);
-  border-color: rgba(255,196,0,.50);
-  color:#111;
-}
-
-.btn.danger{
-  background: rgba(179,38,30,.85);
-  border-color: rgba(179,38,30,.50);
-}
-
-/* BOARDS */
-.board{
-  margin-top: 16px;
-  border-radius: 22px;
-  background: var(--panel-2);
+  background: rgba(255,255,255,.06);
   border: 1px solid var(--stroke);
-  box-shadow:
-    0 18px 44px rgba(0,0,0,.55),
-    inset 0 1px 0 rgba(255,255,255,.06);
-  padding: 14px;
+  color: var(--text);
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor:pointer;
+}
+.btn.mini{ padding:8px 10px; border-radius: 10px; font-size: 12px; }
 
-  /* Importante: NO scroll interno */
-  overflow: hidden;
+/* SECTIONS */
+.board{
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: var(--radius);
+
+  background: var(--panel-2);
+  border: 1px solid var(--stroke-2);
+
+  box-shadow:
+    0 18px 40px rgba(0,0,0,.55),
+    inset 0 1px 0 rgba(255,255,255,.04);
+
+  overflow: hidden; /* evita “guías” internas */
 }
 
 .sectionTitle{
   font-weight: 900;
-  letter-spacing: 2px;
+  letter-spacing: .16em;
   text-transform: uppercase;
-  opacity: .92;
-  margin: 2px 0 12px;
+  color: rgba(255,255,255,.9);
+  margin-bottom: 12px;
 }
 
-/* TABLAS: sin “líneas” internas */
+/* TABLE */
 table{
   width: 100%;
-  table-layout: fixed;            /* clave para que columnas respeten el header */
-  border-collapse: separate;
-  border-spacing: 0;
-  border-radius: 18px;
+  border-collapse: collapse;
+  table-layout: fixed;
   overflow: hidden;
-
-  border: 1px solid rgba(255,255,255,.09);
-  background: rgba(0,0,0,.16);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+  border-radius: 16px;
 }
 
-th, td{
-  border: none;                   /* quita líneas */
-  vertical-align: middle;
+/* TIPOGRAFÍA DE TABLAS (aquí cambias “las letras” de TODO lo que ves en tablas) */
+th{
+  padding: 14px 12px;
+  font-size: 12px;
+  color: rgba(255,255,255,.78);
+  text-transform: uppercase;
+  letter-spacing: .18em;
+  font-weight: 800;
+
+  /* sin líneas */
+  border-bottom: none;
+}
+
+td{
+  padding: 16px 12px;
+  font-size: 14px;
+
+  /* look tipo panel/tech */
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  letter-spacing: .10em;
+  font-weight: 700;
+  color: var(--gold);
+
+  /* sin líneas */
+  border-bottom: none;
+
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-thead th{
-  padding: 16px 18px 14px;
-  font-size: 12px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.78);
+/* “Separación” sin líneas: zebra suave */
+tbody tr:nth-child(odd){ background: rgba(255,255,255,.03); }
+tbody tr:nth-child(even){ background: rgba(255,255,255,.015); }
+
+/* helpers */
+.center{ text-align: center; }
+.right{ text-align: right; }
+.left{ text-align: left; }
+
+/* --- FIX: columna ESTADO (sin “…”, sin recorte) --- */
+th.estadoHead{ text-align: center; }
+
+td.estadoCell{
+  /* elimina ellipsis en esa celda */
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+
+  /* alinea el pill a la derecha */
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+
+  padding-right: 18px;
 }
 
-tbody td{
-  padding: 16px 18px;
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--gold);
-  font-family: var(--mono);
-  letter-spacing: 1px;
-}
-
-/* “Separación” sin líneas: zebra MUY suave */
-tbody tr:nth-child(odd){ background: rgba(255,255,255,.015); }
-tbody tr:nth-child(even){ background: rgba(0,0,0,.00); }
-
-/* Asegurar 7 filas sin recortes (altura consistente) */
-tbody tr{ height: 54px; }
-
-/* Alineaciones generales */
-th.num, td.num{ text-align:right; }
-
-/* ===== PROYECTOS (table.compact) ===== */
-/* PROGRAMAS (col 2): centrado + tipografía mono */
-table.compact th:nth-child(2),
-table.compact td:nth-child(2){
-  text-align: center;
-  font-family: var(--mono);
-  letter-spacing: 1px;
-}
-
-/* PROYECTOS (col 3): derecha (ya te gustaba así) */
-table.compact th:nth-child(3),
-table.compact td:nth-child(3){
-  text-align: right;
-  font-family: var(--mono);
-  letter-spacing: .6px;
-}
-
-/* ESTADO (col 4): corregir desfase -> columna “firme” y contenido a la derecha */
-table.compact th:nth-child(4),
-table.compact td:nth-child(4){
-  text-align: right;
-  padding-right: 24px; /* empuja el pill al borde derecho sin “desfase” */
-}
-
-/* ===== VUELOS (la tabla que NO es compact) ===== */
-/* AERONAVE (col 2), TIPO (col 3), DESTINO (col 4): centrado + mono */
-#boardScreen .board table:not(.compact) th:nth-child(2),
-#boardScreen .board table:not(.compact) td:nth-child(2),
-#boardScreen .board table:not(.compact) th:nth-child(3),
-#boardScreen .board table:not(.compact) td:nth-child(3),
-#boardScreen .board table:not(.compact) th:nth-child(4),
-#boardScreen .board table:not(.compact) td:nth-child(4){
-  text-align: center;
-  font-family: var(--mono);
-  letter-spacing: 1px;
-}
-
-/* HORA DE SALIDA (col 5): derecha */
-#boardScreen .board table:not(.compact) th:nth-child(5),
-#boardScreen .board table:not(.compact) td:nth-child(5){
-  text-align: right;
-  font-family: var(--mono);
-  letter-spacing: .6px;
-}
-
-/* STATUS pill */
 .status{
-  display:inline-flex;
+  display: inline-flex;
   align-items:center;
   justify-content:center;
 
-  padding: 9px 16px;
+  padding: 10px 18px;
   border-radius: 999px;
+  background: var(--pill-bg);
+  border: 1px solid var(--pill-stroke);
+  color: var(--pill-text);
 
-  font-size: 12px;
-  font-weight: 1000;
-  letter-spacing: 1px;
+  font-weight: 900;
+  letter-spacing: .14em;
   text-transform: uppercase;
+  font-size: 12px;
 
-  background: rgba(0,255,178,.12);
-  border: 1px solid rgba(0,255,178,.38);
-  color: var(--green);
-
-  box-shadow: 0 8px 18px rgba(0,0,0,.35);
+  /* IMPORTANTE: evita que el pill provoque ellipsis */
+  max-width: 100%;
 }
 
-/* Footer */
+/* footer */
 .footer{
   display:flex;
   justify-content:space-between;
-  margin-top: 10px;
-  font-size: 12px;
-  color: rgba(255,255,255,.68);
-}
-
-/* Error */
-.error{
   margin-top: 12px;
-  padding: 12px 14px;
-  border-radius: 14px;
+  font-size: 12px;
+  color: rgba(255,255,255,.70);
+}
 
-  background: rgba(120,0,0,.22);
-  border: 1px solid rgba(255,80,80,.22);
-  color: rgba(255,220,220,.95);
-
+.error{
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(179,38,30,.18);
+  border: 1px solid rgba(179,38,30,.35);
+  color: rgba(255,210,210,.95);
   display:none;
 }
 
-/* MEDIA screen (carrusel) */
-#mediaScreen{
-  display:none;
-  height:100vh;
-  width:100vw;
-}
-#mediaInner{
-  height:100%;
-  width:100%;
-  display:grid;
-  place-items:center;
-  position:relative;
-}
-#mediaImg, #mediaVideo{
-  max-width:100%;
-  max-height:100%;
-  object-fit:contain;
-  display:none;
-}
+/* MEDIA SCREEN */
+#mediaScreen{ display:none; height:100vh; width:100vw; }
+#mediaInner{ height:100%; width:100%; display:grid; place-items:center; position:relative; }
+#mediaImg, #mediaVideo{ max-width:100%; max-height:100%; object-fit:contain; display:none; }
+
 #mediaLoading{
   position:absolute;
-  bottom:24px;
-  left:24px;
+  bottom: 24px;
+  left: 24px;
   background: rgba(0,0,0,.55);
   padding: 10px 12px;
   border-radius: 12px;
@@ -343,6 +281,10 @@ table.compact td:nth-child(4){
 #mediaLoading .bar i{
   display:block;
   width: 60%;
-  height:100%;
+  height: 100%;
   background: rgba(255,255,255,.35);
 }
+
+/* Evitar scrollbars visibles en cualquier lugar */
+*::-webkit-scrollbar{ width:0; height:0; }
+*{ scrollbar-width: none; }
