@@ -201,6 +201,8 @@ tbody td{
   font-size: 16px;
   font-weight: 800;
   color: var(--gold);
+  font-family: var(--mono);
+  letter-spacing: 1px;
 }
 
 /* “Separación” sin líneas: zebra MUY suave */
