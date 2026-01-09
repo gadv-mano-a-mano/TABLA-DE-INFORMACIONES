@@ -3,80 +3,86 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>TABLA-DE-INFORMACIONES</title>
+  <title>InfoBoard</title>
   <link rel="stylesheet" href="./styles/base.css">
 </head>
 
 <body data-screen="board">
+  <!-- BOARD -->
   <div id="boardScreen">
     <div class="wrap">
-      <div class="header">
-        <div class="title">
-          <div class="badge">ℹ</div>
-          <div>INFO BOARD</div>
-        </div>
+      <div class="panel">
+        <div class="panelInner">
+          <div class="topbar">
+            <div class="brand">
+              <div class="badgeSquare">i</div>
+              <div>INFO BOARD</div>
+            </div>
 
-        <div class="headerBtns">
-          <button id="btnRefreshCarousel" class="btn mini" type="button" title="Actualizar carrusel">↻ Carrusel</button>
-          <button id="btnFs" class="fsbtn" type="button" aria-label="Pantalla completa" title="Pantalla completa">⛶</button>
-        </div>
+            <div class="controlsRow">
+              <button id="btnRefreshCarousel" class="btn btnPrimary" type="button" title="Actualizar carrusel">↻</button>
+              <button id="btnFs" class="btn fsbtn" type="button" aria-label="Pantalla completa" title="Pantalla completa">⛶</button>
+            </div>
 
-        <div class="meta">
-          <div id="now"></div>
-          <div>Auto-refresh: <span id="refreshEvery"></span>s</div>
-          <div class="muted" id="carouselStatus">—</div>
-        </div>
-      </div>
+            <div class="rightInfo">
+              <div id="now">—</div>
+              <div>Auto-refresh: <span id="refreshEvery">—</span>s</div>
+              <div class="muted" id="carouselStatus">—</div>
+            </div>
+          </div>
 
-      <!-- PROYECTOS -->
-      <div class="board first">
-        <div class="sectionTitle">PROYECTOS</div>
-        <table class="compact">
-          <thead>
-            <tr>
-              <th>INSTITUCION</th>
-              <th>PROGRAMAS</th>
-              <th class="num" style="width:140px;">PROYECTOS</th>
-              <th style="width:170px;">ESTADO</th>
-            </tr>
-          </thead>
-          <tbody id="rowsProjects"></tbody>
-        </table>
-        <div id="errProjects" class="error"></div>
-      </div>
+          <!-- PROYECTOS -->
+          <div class="sectionTitle">PROYECTOS</div>
+          <div class="tableCard">
+            <table>
+              <thead>
+                <tr>
+                  <th>INSTITUCION</th>
+                  <th>PROGRAMAS</th>
+                  <th class="num" style="width:140px;">PROYECTOS</th>
+                  <th style="width:170px;">ESTADO</th>
+                </tr>
+              </thead>
+              <tbody id="rowsProjects"></tbody>
+            </table>
+            <div class="footerBar">
+              <div class="muted" id="errProjects" style="display:none;"></div>
+              <div></div>
+            </div>
+          </div>
 
-      <!-- VUELOS -->
-      <div class="board" style="margin-top:14px;">
-        <div class="sectionTitle">VUELOS</div>
-        <table>
-          <thead>
-            <tr>
-              <th style="width:140px;">FECHA</th>
-              <th style="width:220px;">AERONAVE</th>
-              <th style="width:240px;">TIPO DE VUELO</th>
-              <th>DESTINO</th>
-              <th style="width:190px;">HORA DE SALIDA</th>
-            </tr>
-          </thead>
-          <tbody id="rowsFlights"></tbody>
-        </table>
+          <!-- VUELOS -->
+          <div class="sectionTitle" style="margin-top:18px;">VUELOS</div>
+          <div class="tableCard">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:140px;">FECHA</th>
+                  <th style="width:220px;">AERONAVE</th>
+                  <th style="width:240px;">TIPO DE VUELO</th>
+                  <th>DESTINO</th>
+                  <th style="width:190px;">HORA DE SALIDA</th>
+                </tr>
+              </thead>
+              <tbody id="rowsFlights"></tbody>
+            </table>
 
-        <div class="footer">
-          <div>Last update: <span id="lastUpdate">—</span></div>
-          <div>
-            Proyectos: <span id="countProjects">0</span> |
-            Vuelos: <span id="countFlights">0</span>
+            <div class="footerBar">
+              <div>Last update: <span id="lastUpdate">—</span></div>
+              <div>Proyectos: <span id="countProjects">0</span> | Vuelos: <span id="countFlights">0</span></div>
+            </div>
+
+            <div id="errFlights" class="error"></div>
           </div>
         </div>
-
-        <div id="errFlights" class="error"></div>
       </div>
     </div>
   </div>
 
+  <!-- MEDIA -->
   <div id="mediaScreen">
     <div id="mediaInner">
-      <img id="mediaImg" alt="Publicidad" />
+      <img id="mediaImg" alt="Carrusel" />
       <video id="mediaVideo"></video>
 
       <div id="mediaLoading">
