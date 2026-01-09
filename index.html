@@ -30,54 +30,65 @@
               <div class="muted" id="carouselStatus">—</div>
             </div>
           </div>
-
-          <!-- PROYECTOS -->
-          <div class="sectionTitle">PROYECTOS</div>
-          <div class="tableCard">
-            <table>
-              <thead>
-                <tr>
-                  <th>INSTITUCION</th>
-                  <th>PROGRAMAS</th>
-                  <th class="num" style="width:140px;">PROYECTOS</th>
-                  <th style="width:170px;">ESTADO</th>
-                </tr>
-              </thead>
-              <tbody id="rowsProjects"></tbody>
-            </table>
-            <div class="footerBar">
-              <div class="muted" id="errProjects" style="display:none;"></div>
-              <div></div>
-            </div>
+          <div class="board-panels">
+            <!-- =========================
+                 PANEL: PROYECTOS
+                 ========================= -->
+            <section class="board-panel">
+              <div class="sectionTitle">PROYECTOS</div>
+          
+              <div class="table-wrap">
+                <table class="data-table projects-table">
+                  <thead>
+                    <tr>
+                      <th>INSTITUCION</th>
+                      <th>PROGRAMAS</th>
+                      <th class="num">PROYECTOS</th>
+                      <th>ESTADO</th>
+                    </tr>
+                  </thead>
+          
+                  <tbody id="rowsProjects"></tbody>
+                </table>
+          
+                <div id="errProjects" class="error"></div>
+              </div>
+            </section>
+          
+            <!-- =========================
+                 PANEL: VUELOS
+                 ========================= -->
+            <section class="board-panel">
+              <div class="sectionTitle">VUELOS</div>
+          
+              <div class="table-wrap">
+                <table class="data-table flights-table">
+                  <thead>
+                    <tr>
+                      <th>FECHA</th>
+                      <th>AERONAVE</th>
+                      <th>TIPO DE VUELO</th>
+                      <th>DESTINO</th>
+                      <th>HORA DE SALIDA</th>
+                    </tr>
+                  </thead>
+          
+                  <tbody id="rowsFlights"></tbody>
+                </table>
+          
+                <div class="footer">
+                  <div>Last update: <span id="lastUpdate">—</span></div>
+                  <div>
+                    Proyectos: <span id="countProjects">0</span> |
+                    Vuelos: <span id="countFlights">0</span>
+                  </div>
+                </div>
+          
+                <div id="errFlights" class="error"></div>
+              </div>
+            </section>
+          
           </div>
-
-          <!-- VUELOS -->
-          <div class="sectionTitle" style="margin-top:18px;">VUELOS</div>
-          <div class="tableCard">
-            <table>
-              <thead>
-                <tr>
-                  <th style="width:140px;">FECHA</th>
-                  <th style="width:220px;">AERONAVE</th>
-                  <th style="width:240px;">TIPO DE VUELO</th>
-                  <th>DESTINO</th>
-                  <th style="width:190px;">HORA DE SALIDA</th>
-                </tr>
-              </thead>
-              <tbody id="rowsFlights"></tbody>
-            </table>
-
-            <div class="footerBar">
-              <div>Last update: <span id="lastUpdate">—</span></div>
-              <div>Proyectos: <span id="countProjects">0</span> | Vuelos: <span id="countFlights">0</span></div>
-            </div>
-
-            <div id="errFlights" class="error"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- MEDIA -->
   <div id="mediaScreen">
