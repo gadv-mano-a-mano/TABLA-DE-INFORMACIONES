@@ -1,290 +1,363 @@
 :root{
-  /* Si tu pantalla/TV recorta bordes, baja a 0.90 / 0.88 */
-  --tv-scale: 0.92;
-
-  --bg: #0a0a0a;
-  --panel: rgba(18,18,18,.72);
-  --panel-2: rgba(14,14,14,.78);
-  --stroke: rgba(255,255,255,.10);
-  --stroke-2: rgba(255,255,255,.06);
-
-  --text: rgba(255,255,255,.92);
-  --muted: rgba(255,255,255,.62);
-
-  --gold: #f6b700;
-
-  --pill-bg: rgba(0, 255, 140, .12);
-  --pill-stroke: rgba(0, 255, 140, .35);
-  --pill-text: rgba(0, 255, 140, .92);
-
-  --radius: 22px;
+  --tv-scale: 0.96; /* baja a 0.94/0.92 si la TV recorta */
+  --yellow: #ffcc33;
+  --green: #2effb6;
+  --panel: rgba(20,20,20,.65);
+  --panel-2: rgba(12,12,12,.55);
+  --line: rgba(255,255,255,.06);
+  --soft: rgba(255,255,255,.10);
 }
 
 *{ box-sizing:border-box; }
 html,body{ height:100%; }
-
 body{
   margin:0;
-  background: radial-gradient(1200px 600px at 50% 0%, rgba(255,255,255,.10), transparent 60%),
-              radial-gradient(900px 500px at 10% 30%, rgba(255,255,255,.06), transparent 65%),
-              radial-gradient(900px 500px at 90% 40%, rgba(255,255,255,.06), transparent 65%),
-              var(--bg);
-  color: var(--text);
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-
-  /* IMPORTANTE: quita scrollbar “guía” del lado derecho */
-  overflow: hidden;
+  background:#0b0b0b;
+  color:#f2f2f2;
+  overflow:hidden;
 }
 
-/* TV safe scale */
+/* ===== TV safe scale (solo board) ===== */
 body[data-screen="board"] #boardScreen .wrap{
   transform: scale(var(--tv-scale));
   transform-origin: top left;
   width: calc(100% / var(--tv-scale));
 }
 
+/* ===== Layout general ===== */
 .wrap{
-  max-width: min(1500px, calc(100vw - 24px));
+  max-width: 1500px;
   margin: 0 auto;
-  padding: 12px; /* un poco menos para evitar recorte */
+  padding: 18px;
 }
 
-/* HEADER */
 .header{
   display:flex;
-  align-items:flex-start;
+  align-items:center;
   justify-content:space-between;
   gap:16px;
-
-  padding: 14px 16px;
-  border-radius: 18px;
-
-  background: var(--panel);
-  border: 1px solid var(--stroke);
-  box-shadow:
-    0 18px 40px rgba(0,0,0,.55),
-    inset 0 1px 0 rgba(255,255,255,.05);
+  padding:14px 16px;
+  background: linear-gradient(180deg, rgba(30,30,30,.75), rgba(10,10,10,.35));
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.45);
 }
 
 .title{
   display:flex;
   align-items:center;
   gap:12px;
-
-  font-weight: 800;
-  letter-spacing: .12em;
-  text-transform: uppercase;
+  font-weight:900;
+  letter-spacing:2px;
+  text-transform:uppercase;
 }
-
 .badge{
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
+  width:34px;height:34px;
+  border-radius:12px;
   display:grid;
   place-items:center;
-
-  background: rgba(246,183,0,.14);
-  border: 1px solid rgba(246,183,0,.35);
-  color: var(--gold);
-  font-weight: 900;
+  background: #f8c800;
+  color:#000;
+  font-weight:900;
 }
 
 .meta{
   text-align:right;
-  font-size: 12px;
-  color: var(--muted);
-  line-height: 1.25;
+  font-size:12px;
+  color:#cfcfcf;
 }
-
-.muted{ color: var(--muted); }
+.muted{ color:#9aa0a6; }
 
 .headerBtns{
   display:flex;
-  gap:10px;
   align-items:center;
-  justify-content:center;
+  gap:10px;
 }
-
 .fsbtn{
-  width: 44px;
-  height: 38px;
-  border-radius: 12px;
-  background: rgba(255,255,255,.06);
-  border: 1px solid var(--stroke);
-  color: var(--text);
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.14);
+  color:#fff;
+  border-radius:12px;
+  width:44px;height:36px;
   cursor:pointer;
-  font-size: 16px;
+  font-size:18px;
 }
-
 .btn{
-  background: rgba(255,255,255,.06);
-  border: 1px solid var(--stroke);
-  color: var(--text);
-  border-radius: 12px;
-  padding: 10px 14px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.14);
+  color:#fff;
+  border-radius:12px;
+  padding:10px 14px;
   cursor:pointer;
 }
-.btn.mini{ padding:8px 10px; border-radius: 10px; font-size: 12px; }
+.btn.primary{ background:#2b6fff; border-color:#2b6fff; }
+.btn.danger{ background:#b3261e; border-color:#b3261e; }
+.btn.mini{
+  padding:8px 10px;
+  border-radius:10px;
+  font-size:12px;
+}
 
-/* SECTIONS */
+/* ===== Boards ===== */
 .board{
-  margin-top: 14px;
-  padding: 14px;
-  border-radius: var(--radius);
-
-  background: var(--panel-2);
-  border: 1px solid var(--stroke-2);
-
-  box-shadow:
-    0 18px 40px rgba(0,0,0,.55),
-    inset 0 1px 0 rgba(255,255,255,.04);
-
-  overflow: hidden; /* evita “guías” internas */
+  margin-top:16px;
+  background: linear-gradient(180deg, rgba(20,20,20,.65), rgba(10,10,10,.35));
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:18px;
+  padding:14px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.40);
 }
 
-.sectionTitle{
-  font-weight: 900;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.9);
-  margin-bottom: 12px;
+.label{
+  font-weight:900;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  margin-bottom:12px;
 }
 
-/* TABLE */
+/* ===== Tables ===== */
 table{
-  width: 100%;
-  border-collapse: collapse;
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  overflow:hidden;
+  border-radius:14px;
   table-layout: fixed;
-  overflow: hidden;
-  border-radius: 16px;
 }
 
-/* TIPOGRAFÍA DE TABLAS (aquí cambias “las letras” de TODO lo que ves en tablas) */
-th{
-  padding: 14px 12px;
-  font-size: 12px;
-  color: rgba(255,255,255,.78);
-  text-transform: uppercase;
-  letter-spacing: .18em;
-  font-weight: 800;
+th, td{
+  padding:16px 14px;
+  font-size:15px;
+  line-height:1.2;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 
-  /* sin líneas */
-  border-bottom: none;
+th{
+  color:#d0d0d0;
+  font-weight:900;
+  background: rgba(255,255,255,.04);
 }
 
 td{
-  padding: 16px 12px;
-  font-size: 14px;
-
-  /* look tipo panel/tech */
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  letter-spacing: .10em;
-  font-weight: 700;
-  color: var(--gold);
-
-  /* sin líneas */
-  border-bottom: none;
-
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--yellow);
+  font-weight:800;
+  text-align:center;
 }
 
-/* “Separación” sin líneas: zebra suave */
-tbody tr:nth-child(odd){ background: rgba(255,255,255,.03); }
-tbody tr:nth-child(even){ background: rgba(255,255,255,.015); }
-
-/* helpers */
-.center{ text-align: center; }
-.right{ text-align: right; }
-.left{ text-align: left; }
-
-/* --- FIX: columna ESTADO (sin “…”, sin recorte) --- */
-th.estadoHead{ text-align: center; }
-
-td.estadoCell{
-  /* elimina ellipsis en esa celda */
-  overflow: visible;
-  text-overflow: clip;
-  white-space: nowrap;
-
-  /* alinea el pill a la derecha */
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-
-  padding-right: 18px;
+tbody tr:nth-child(odd) td{
+  background: rgba(255,255,255,.02);
+}
+tbody tr:nth-child(even) td{
+  background: rgba(255,255,255,.01);
 }
 
+/* Quitamos líneas visibles de tablas */
+th, td{
+  border: none !important;
+}
+tbody tr{
+  outline: none !important;
+}
+
+/* columnas numéricas */
+th.num, td.num{ text-align:right; }
+
+/* status pills */
 .status{
-  display: inline-flex;
-  align-items:center;
-  justify-content:center;
-
-  padding: 10px 18px;
-  border-radius: 999px;
-  background: var(--pill-bg);
-  border: 1px solid var(--pill-stroke);
-  color: var(--pill-text);
-
-  font-weight: 900;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  font-size: 12px;
-
-  /* IMPORTANTE: evita que el pill provoque ellipsis */
-  max-width: 100%;
+  display:inline-block;
+  padding:10px 18px;
+  border-radius:999px;
+  background: rgba(0, 255, 160, .12);
+  border: 1px solid rgba(0, 255, 160, .35);
+  color: var(--green);
+  font-size:12px;
+  letter-spacing:2px;
+  font-weight:900;
 }
 
 /* footer */
 .footer{
   display:flex;
   justify-content:space-between;
-  margin-top: 12px;
-  font-size: 12px;
-  color: rgba(255,255,255,.70);
+  margin-top:10px;
+  font-size:12px;
+  color:#cfcfcf;
 }
 
 .error{
-  margin-top: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(179,38,30,.18);
-  border: 1px solid rgba(179,38,30,.35);
-  color: rgba(255,210,210,.95);
+  margin-top:10px;
+  padding:12px 14px;
+  border-radius:12px;
+  background: rgba(120,20,20,.25);
+  border:1px solid rgba(255,120,120,.25);
+  color:#ffd1d1;
   display:none;
 }
 
-/* MEDIA SCREEN */
+/* ===== Admin shared styles ===== */
+.card{
+  background:#111;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:14px;
+  padding:14px;
+}
+.row{ display:flex; gap:12px; align-items:flex-start; justify-content:space-between; }
+.col{ flex:1; min-width:200px; }
+label{
+  display:block;
+  font-size:12px;
+  color:#cfcfcf;
+  margin-bottom:6px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+input, select{
+  width:100%;
+  background:#0f0f0f;
+  border:1px solid rgba(255,255,255,.16);
+  color:#fff;
+  border-radius:12px;
+  padding:10px 12px;
+}
+.progress{
+  height:10px;
+  background:#1c1c1c;
+  border-radius:999px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.12);
+}
+#progressBar{ height:100%; width:0%; background:#2b6fff; }
+
+.slotList{
+  margin-top:14px;
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap:12px;
+}
+.slotItem{
+  padding:12px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:14px;
+  background:#0f0f0f;
+}
+.slotItem h4{ margin:0 0 8px 0; }
+.metaLine{ font-size:12px; color:#cfcfcf; margin-top:4px; }
+
+.pill{
+  font-size:11px;
+  padding:4px 8px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.08);
+  margin-left:8px;
+}
+.pill.on{ background:rgba(0,255,160,.12); border-color:rgba(0,255,160,.35); }
+.pill.off{ background:rgba(255,120,120,.12); border-color:rgba(255,120,120,.30); }
+
+/* ===== media screen ===== */
 #mediaScreen{ display:none; height:100vh; width:100vw; }
 #mediaInner{ height:100%; width:100%; display:grid; place-items:center; position:relative; }
 #mediaImg, #mediaVideo{ max-width:100%; max-height:100%; object-fit:contain; display:none; }
-
 #mediaLoading{
   position:absolute;
-  bottom: 24px;
-  left: 24px;
-  background: rgba(0,0,0,.55);
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.12);
+  bottom:24px;
+  left:24px;
+  background:rgba(0,0,0,.55);
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.12);
   display:none;
 }
 #mediaLoading .bar{
-  margin-top: 8px;
-  width: 240px;
-  height: 8px;
-  background: rgba(255,255,255,.12);
-  border-radius: 999px;
+  margin-top:8px;
+  width:240px;
+  height:8px;
+  background:rgba(255,255,255,.12);
+  border-radius:999px;
   overflow:hidden;
 }
 #mediaLoading .bar i{
   display:block;
-  width: 60%;
-  height: 100%;
-  background: rgba(255,255,255,.35);
+  width:60%;
+  height:100%;
+  background:rgba(255,255,255,.35);
 }
 
-/* Evitar scrollbars visibles en cualquier lugar */
-*::-webkit-scrollbar{ width:0; height:0; }
-*{ scrollbar-width: none; }
+/* =========================================================
+   AJUSTES SOLICITADOS (SOLO 2 COSAS)
+   1) Altura: Vuelos 55% / Proyectos 45% (pantalla pública)
+   2) Alineación "mid-left" SOLO para:
+      - Programas (Proyectos)
+      - Tipo de vuelo + Destino (Vuelos)
+   ========================================================= */
+
+/* 1) Layout de paneles (solo vista pública) */
+body[data-screen="board"] #boardScreen .wrap{
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+body[data-screen="board"] .boards{
+  margin-top: 16px;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* quitamos margin-top interno porque ahora usamos gap */
+body[data-screen="board"] .board{
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Proporciones */
+body[data-screen="board"] .board.projects{ flex: 45 1 0; }
+body[data-screen="board"] .board.flights { flex: 55 1 0; }
+
+/* La tabla ocupa el espacio disponible dentro del panel */
+body[data-screen="board"] .board > table{
+  flex: 1 1 auto;
+  height: 100%;
+}
+
+/* Footer pegado abajo (solo vuelos lo usa) */
+body[data-screen="board"] .board .footer{
+  margin-top: auto;
+}
+
+/* 2) Alineación mid-left en columnas específicas (SIN tocar ESTADO) */
+:root{
+  /* Ajusta aquí si quieres mover más/menos hacia la “línea roja” */
+  --midleft-inset: clamp(18px, 2.4vw, 56px);
+}
+
+/* PROGRAMAS (tabla Proyectos) = columna 2 */
+.projects-table td:nth-child(2){
+  text-align: left;
+  padding-left: var(--midleft-inset);
+  padding-right: 10px;
+}
+
+/* TIPO DE VUELO (tabla Vuelos) = columna 3 */
+.flights-table td:nth-child(3){
+  text-align: left;
+  padding-left: var(--midleft-inset);
+  padding-right: 10px;
+}
+
+/* DESTINO (tabla Vuelos) = columna 4 */
+.flights-table td:nth-child(4){
+  text-align: left;
+  padding-left: var(--midleft-inset);
+  padding-right: 10px;
+}
