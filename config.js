@@ -1,19 +1,22 @@
 // config.js
 export const CONFIG = {
   // ===== Firebase Web App config (ya lo tienes) =====
+  import { initializeApp } from "firebase/app";
   firebaseConfig: {
-    apiKey: "AIzaSyA3f-IdR6O_k13LLeru3VNG1qFgBGJg_00",
+    apiKey: "AIzaSyA3f-IdR6O_kl3LLeru3vNG1qFgBGJg_O0",
     authDomain: "info-board-v3.firebaseapp.com",
     projectId: "info-board-v3",
     storageBucket: "info-board-v3.firebasestorage.app",
     messagingSenderId: "70958093532",
     appId: "1:70958093532:web:750f05dc1606da3d789019",
   },
+  const app = initializeApp(firebaseConfig);
 
   // ===== Admins (los mismos de tus rules) =====
   adminEmails: [
     "gadv.mano.a.mano@gmail.com",
     "guian.devi1265@gmail.com",
+    "pedelvi@gmail.com",
   ],
 
   // ===== Google Sheets CSV (los que ya generaste) =====
