@@ -148,14 +148,14 @@ body[data-screen="board"] #boardScreen .wrap{
 
 /* PROYECTOS: más compacto para que no se corte */
 #projectsBoard{
-  --th-pad-y: 12px;
-  --td-pad-y: 12px;
+  --th-pad-y: 10px;
+  --td-pad-y: 10px;
 }
 
 /* VUELOS: más alto para que no quede mucho aire */
 #flightsBoard{
   --th-pad-y: 14px;
-  --td-pad-y: 18px;
+  --td-pad-y: 20px;
 }
 
 .sectionTitle{
@@ -163,7 +163,7 @@ body[data-screen="board"] #boardScreen .wrap{
   letter-spacing: .16em;
   text-transform: uppercase;
   color: rgba(255,255,255,.9);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 /* TABLE */
@@ -254,7 +254,7 @@ td.estadoCell{
 .footer{
   display:flex;
   justify-content:space-between;
-  margin-top: 12px;
+  margin-top: 16px;
   font-size: 12px;
   color: rgba(255,255,255,.70);
 }
@@ -338,4 +338,15 @@ body[data-screen="board"] .boards .board.projects{
 body[data-screen="board"] .boards .board.flights{
   flex: 55 1 0;
 }
+
+/* evita que thead empuje demasiado */
+thead tr{
+  line-height: 1.05;
+}
+
+/* filas más estables */
+tbody tr{
+  line-height: 1.1;
+}
+
 
