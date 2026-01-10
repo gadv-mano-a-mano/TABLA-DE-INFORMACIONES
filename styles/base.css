@@ -178,7 +178,7 @@ table{
 /* TIPOGRAFÍA DE TABLAS (aquí cambias “las letras” de TODO lo que ves en tablas) */
 th{
   padding: var(--th-pad-y) 12px;
-  font-size: 12px;
+  font-size: 17px;
   color: rgba(255,255,255,.78);
   text-transform: uppercase;
   letter-spacing: .18em;
@@ -188,7 +188,7 @@ th{
 
 td{
   padding: var(--td-pad-y) 12px;
-  font-size: 14px;
+  font-size: 16px;
 
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   letter-spacing: .10em;
