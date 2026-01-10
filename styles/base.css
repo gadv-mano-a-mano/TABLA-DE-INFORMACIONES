@@ -1,6 +1,10 @@
 :root{
   /* Si tu pantalla/TV recorta bordes, baja a 0.90 / 0.88 */
   --tv-scale: 0.92;
+  
+  --th-pad-y: 14px;
+  --td-pad-y: 16px;
+
 
   --bg: #0a0a0a;
   --panel: rgba(18,18,18,.72);
@@ -142,6 +146,18 @@ body[data-screen="board"] #boardScreen .wrap{
   overflow: hidden; /* evita “guías” internas */
 }
 
+/* PROYECTOS: más compacto para que no se corte */
+#projectsBoard{
+  --th-pad-y: 12px;
+  --td-pad-y: 12px;
+}
+
+/* VUELOS: más alto para que no quede mucho aire */
+#flightsBoard{
+  --th-pad-y: 14px;
+  --td-pad-y: 18px;
+}
+
 .sectionTitle{
   font-weight: 900;
   letter-spacing: .16em;
@@ -161,33 +177,31 @@ table{
 
 /* TIPOGRAFÍA DE TABLAS (aquí cambias “las letras” de TODO lo que ves en tablas) */
 th{
-  padding: 14px 12px;
+  padding: var(--th-pad-y) 12px;
   font-size: 12px;
   color: rgba(255,255,255,.78);
   text-transform: uppercase;
   letter-spacing: .18em;
   font-weight: 800;
-
-  /* sin líneas */
   border-bottom: none;
 }
 
 td{
-  padding: 16px 12px;
+  padding: var(--td-pad-y) 12px;
   font-size: 14px;
 
-  /* look tipo panel/tech */
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   letter-spacing: .10em;
   font-weight: 700;
   color: var(--gold);
 
-  /* sin líneas */
   border-bottom: none;
 
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  line-height: 1.15; /* ayuda a que no “crezca” de más */
 }
 
 /* “Separación” sin líneas: zebra suave */
