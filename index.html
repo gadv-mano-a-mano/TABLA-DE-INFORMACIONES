@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Info Board</title>
+  <link rel="stylesheet" href="./styles/base.css">
+</head>
+
+<body data-screen="board">
+  <!-- Pantalla 1 (TABLA) -->
+  <div id="boardScreen">
+    <div class="wrap">
+      <div class="header">
+        <div class="title">
+          <div class="badge">ℹ</div>
+          <div>INFO BOARD</div>
+        </div>
+
+        <button id="btnFs" class="fsbtn" type="button" aria-label="Pantalla completa" title="Pantalla completa">⛶</button>
+
+        <div class="meta">
+          <div id="now"></div>
+          <div>Auto-refresh: <span id="refreshEvery"></span>s</div>
+        </div>
+      </div>
+
+      <!-- PROYECTOS -->
+      <div class="board first">
+        <div class="sectionTitle">PROYECTOS</div>
+        <table class="compact">
+          <thead>
+            <tr>
+              <th>INSTITUCION</th>
+              <th>PROGRAMAS</th>
+              <th style="width:140px;">PROYECTOS</th>
+              <th style="width:170px;">ESTADO</th>
+            </tr>
+          </thead>
+          <tbody id="rowsProjects"></tbody>
+        </table>
+        <div id="errProjects" class="error"></div>
+      </div>
+
+      <!-- VUELOS -->
+      <div class="board" style="margin-top:14px;">
+        <div class="sectionTitle">VUELOS</div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:180px;">FECHA</th>
+              <th style="width:200px;">AERONAVE</th>
+              <th style="width:240px;">TIPO DE VUELO</th>
+              <th>DESTINO</th>
+              <th style="width:190px;">HORA DE SALIDA</th>
+            </tr>
+          </thead>
+          <tbody id="rowsFlights"></tbody>
+        </table>
+
+        <div class="footer">
+          <div>Last update: <span id="lastUpdate">—</span></div>
+          <div>
+            Proyectos: <span id="countProjects">0</span> |
+            Vuelos: <span id="countFlights">0</span>
+          </div>
+        </div>
+
+        <div id="errFlights" class="error"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pantalla 2 (MEDIA) -->
+  <div id="mediaScreen">
+    <div id="mediaInner">
+      <img id="mediaImg" alt="Publicidad" />
+      <video id="mediaVideo"></video>
+
+      <div id="mediaLoading">
+        <span>Cargando…</span>
+        <div class="bar"><i></i></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./scripts/public.js"></script>
+</body>
+</html>
