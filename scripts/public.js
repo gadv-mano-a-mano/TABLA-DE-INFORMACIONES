@@ -2,10 +2,10 @@ import { readManifest, getUrlForPath } from "./manifest.js";
 
 // ======= GOOGLE SHEETS CSV =======
 const PROJECTS_CSV_URL =
-  "https://docs.google.com/spreadsheets/d/1O1KoL8mdSwMl-GxOLaUO_QX6HFfbsOw9ghU3lZDzOOM/gviz/tq?tqx=out:csv&gid=0";
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCG-Fb-uIs4UAWWQioIRUX7zRW2aD6gydQcYhP4YGwByesp7Jfodq5wrjh0wnfUTZbyEHVuIdDAPEj/pub?gid=0&single=true&output=csv";
 
 const FLIGHTS_CSV_URL =
-  "https://docs.google.com/spreadsheets/d/1O1KoL8mdSwMl-GxOLaUO_QX6HFfbsOw9ghU3lZDzOOM/gviz/tq?tqx=out:csv&gid=42084063";
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCG-Fb-uIs4UAWWQioIRUX7zRW2aD6gydQcYhP4YGwByesp7Jfodq5wrjh0wnfUTZbyEHVuIdDAPEj/pub?gid=2103036915&single=true&output=csv";
 
 const REFRESH_SECONDS = 30;
 const MAX_ROWS = 7;
