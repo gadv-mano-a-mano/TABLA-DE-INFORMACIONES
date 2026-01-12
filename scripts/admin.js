@@ -15,7 +15,16 @@ import {
   writeManifest,
 } from "./manifest.js";
 
-const ADMIN_EMAIL = "pedelvi@gmail.com";
+const ADMIN_EMAILS = [
+  "gadv.mano.a.mano@gmail.com",
+  "guian.devi1265@gmail.com",
+  "pedelvi@gmail.com"
+].map(e => e.toLowerCase());
+
+function isAdminUser(user){
+  const email = (user?.email || "").toLowerCase();
+  return !!email && ADMIN_EMAILS.includes(email);
+}
 
 // UI
 const authState = document.getElementById("authState");
