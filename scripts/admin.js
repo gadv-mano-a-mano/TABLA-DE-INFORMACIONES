@@ -15,7 +15,7 @@ import {
   writeManifest,
 } from "./manifest.js";
 
-const ADMIN_EMAILS = [
+const ADMIN_EMAIL = [
   "gadv.mano.a.mano@gmail.com",
   "guian.devi1265@gmail.com",
   "pedelvi@gmail.com"
@@ -23,7 +23,7 @@ const ADMIN_EMAILS = [
 
 function isAdminUser(user){
   const email = (user?.email || "").toLowerCase();
-  return !!email && ADMIN_EMAILS.includes(email);
+  return !!email && ADMIN_EMAIL.includes(email);
 }
 
 // UI
@@ -55,9 +55,6 @@ const slotList = document.getElementById("slotList");
 let manifest = null;
 
 // ---- helpers ----
-function isAdminUser(user){
-  return !!user?.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-}
 
 function setProgress(pct, text=""){
   progressBar.style.width = `${pct}%`;
