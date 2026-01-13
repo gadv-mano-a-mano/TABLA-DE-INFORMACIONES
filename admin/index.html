@@ -16,7 +16,7 @@
       </div>
       <div class="meta">
         <div class="muted">InfoBoard v3</div>
-        <div><a href="../" style="color:#cfcfcf;">Abrir público</a></div>
+        <div><a href="../" target="_blank" rel="noopener noreferrer" style="color:#cfcfcf;">Abrir público</a></div>
       </div>
     </div>
 
@@ -37,21 +37,21 @@
       <div id="adminPanel" style="display:none;">
         <div class="row">
           <div class="col">
-            <label>Slot</label>
+            <label for="slotSelect">Slot</label>
             <select id="slotSelect"></select>
           </div>
 
           <div class="col">
-            <label>Archivo</label>
-            <input id="fileInput" type="file" />
+            <label for="fileInput">Archivo</label>
+            <input id="fileInput" type="file" accept="image/*,video/mp4" />
             <div class="muted" id="fileHint" style="margin-top:6px;"></div>
           </div>
 
           <div class="col">
-            <label>Duración</label>
+            <label for="durationSelect">Duración</label>
             <select id="durationSelect"></select>
             <div class="row" style="margin-top:10px;">
-              <label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;">
+              <label for="useVideoDuration" style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;">
                 <input type="checkbox" id="useVideoDuration">
                 Usar duración real del video (solo video)
               </label>
@@ -68,7 +68,7 @@
 
         <div style="margin-top:12px;">
           <div class="progress"><div id="progressBar"></div></div>
-          <div class="muted" id="progressText" style="margin-top:8px;"></div>
+          <div class="muted" id="progressText" style="margin-top:8px;" aria-live="polite"></div>
         </div>
 
         <div class="muted" style="margin-top:12px;">
