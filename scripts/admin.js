@@ -133,17 +133,29 @@ function renderSlots(){
 }
 
 async function loadManifest(){
-  // Si falla la lectura, usamos defaultManifest() SOLO para que la UI no reviente,
-  // pero seguimos mostrando el botón de crear manifest.
+  setProgress(0, "");
+
   try{
-    manifest = await readManifest();
+    // 🔒 Importante: NO usar fallbackToDefault aquí, queremos detectar si existe realmente
+    manifest = await readManifest({ fallbackToDefault: false, normalize: true });
     btnCreateManifest.style.display = "none";
   }catch(e){
     manifest = null;
-    btnCreateManifest.style.display = "inline-block";
+
+    if (e?.code === "storage/object-not-found"){
+      btnCreateManifest.style.display = "inline-block";
+      setProgress(0, "No existe carousel/manifest.json. Crea el manifest para empezar.");
+    } else if (e?.code === "manifest/invalid-json" || e?.code === "manifest/empty"){
+      btnCreateManifest.style.display = "inline-block";
+      setProgress(0, "manifest.json inválido/ilegible. Puedes recrearlo con 'Crear manifest' (sobrescribe el actual).");
+    } else {
+      btnCreateManifest.style.display = "inline-block";
+      setProgress(0, "Error leyendo manifest: " + (e?.message || e));
+    }
   }
 
   if (!manifest){
+    // Solo para que la UI no reviente
     manifest = defaultManifest();
   }
 
@@ -171,7 +183,6 @@ function syncUIFromSelected(){
   const slot = findSlot(id);
   const kind = kindFromSlotId(id);
 
-  // file input types
   fileInput.value = "";
   if (kind === "image"){
     fileInput.accept = "image/jpeg,image/png,image/webp";
@@ -181,12 +192,10 @@ function syncUIFromSelected(){
     fileHint.textContent = "Videos recomendados: MP4 H.264/AAC (máx 50MB según rules).";
   }
 
-  // duración
   const seconds = Math.round(((slot?.durationMs ?? 10000) / 1000));
   durationSelect.value = String(Math.min(20, Math.max(1, seconds)));
   useVideoDuration.checked = !!slot?.useVideoDuration;
 
-  // checkbox solo video
   useVideoDuration.disabled = (kind !== "video");
 }
 
@@ -204,10 +213,12 @@ function updateManifestMeta(){
 
 async function createManifestInStorage(){
   await ensureLoggedAdmin();
+
+  // Evita “creación silenciosa” por lecturas
   const m = defaultManifest();
   await writeManifest(m);
   await loadManifest();
-  setProgress(0, "Manifest creado en carousel/manifest.json");
+  setProgress(0, "Manifest creado/recreado en carousel/manifest.json");
 }
 
 async function uploadToSlot(){
@@ -231,7 +242,6 @@ async function uploadToSlot(){
   const durationSec = parseInt(durationSelect.value, 10);
   const useReal = (kind === "video") ? !!useVideoDuration.checked : false;
 
-  // cache: 1 día + buster por generation
   const metadata = {
     contentType: file.type,
     cacheControl: "public, max-age=31536000, immutable"
@@ -256,7 +266,12 @@ async function uploadToSlot(){
   const cacheBuster = meta.generation || String(Date.now());
 
   // actualiza manifest
-  const slot = findSlot(id);
+  let slot = findSlot(id);
+  if (!slot){
+    slot = { id, kind, enabled:false };
+    manifest.slots = [...(manifest.slots || []), slot];
+  }
+
   slot.kind = kind;
   slot.enabled = true;
   slot.path = path;
@@ -299,7 +314,6 @@ async function deleteSlotFile(){
     return;
   }
 
-  // seguridad extra: nunca borrar manifest
   if (slot.path.endsWith("manifest.json")) {
     setProgress(0, "Bloqueado: no se borra manifest.");
     return;
@@ -307,10 +321,8 @@ async function deleteSlotFile(){
 
   setProgress(10, `Borrando ${slotId}…`);
 
-  // ✅ borrar objeto
   await deleteObject(ref(storage, slot.path));
 
-  // ✅ limpiar slot + actualizar manifest
   slot.enabled = false;
   slot.path = null;
   slot.contentType = null;

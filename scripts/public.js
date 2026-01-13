@@ -7,7 +7,7 @@ const PROJECTS_CSV_URL =
 const FLIGHTS_CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCG-Fb-uIs4UAWWQioIRUX7zRW2aD6gydQcYhP4YGwByesp7Jfodq5wrjh0wnfUTZbyEHVuIdDAPEj/pub?gid=2103036915&single=true&output=csv";
 
-const REFRESH_SECONDS = 30;
+const REFRESH_SECONDS = 0; // 0 = manual
 const MAX_ROWS = 7;
 
 // ======= UI refs =======
@@ -18,7 +18,7 @@ const errFlights = document.getElementById("errFlights");
 const elLast = document.getElementById("lastUpdate");
 const countProjects = document.getElementById("countProjects");
 const countFlights = document.getElementById("countFlights");
-document.getElementById("refreshEvery").textContent = REFRESH_SECONDS;
+const elRefresh = document.getElementById("refreshEvery");
 
 const boardScreen = document.getElementById("boardScreen");
 const mediaScreen = document.getElementById("mediaScreen");
@@ -27,13 +27,30 @@ const mediaVideo = document.getElementById("mediaVideo");
 const mediaLoading = document.getElementById("mediaLoading");
 
 const btnFs = document.getElementById("btnFs");
+const btnUpdate = document.getElementById("btnUpdate");
 
+function setLastUpdate(text){
+  if (elLast) elLast.textContent = text;
+}
+
+function setErr(el, msg){
+  if (!el) return;
+  el.textContent = msg || "";
+  el.style.display = msg ? "block" : "none";
+}
+
+function setRefreshLabel(){
+  if (!elRefresh) return;
+  elRefresh.textContent = (REFRESH_SECONDS > 0) ? `${REFRESH_SECONDS}s` : "Manual";
+}
+setRefreshLabel();
+
+// ======= State =======
 let boardRefreshTimer = null;
 let playlistTimer = null;
 let currentIndex = 0;
 
 let manifestCache = null;
-let manifestRaw = "";
 let urlCache = new Map(); // key: path|buster -> url
 let audioUnlocked = false;
 
@@ -52,6 +69,14 @@ function tickClock() {
 setInterval(tickClock, 1000);
 tickClock();
 
+// ======= LocalStorage helpers =======
+function getLS(key){
+  try { return JSON.parse(localStorage.getItem(key) || "null"); } catch { return null; }
+}
+function setLS(key, val){
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+}
+
 // ======= CSV helpers =======
 function safe(v) {
   return (v ?? "").toString().trim();
@@ -68,9 +93,7 @@ function normHeader(h) {
 
 function parseCSV(text) {
   const rows = [];
-  let row = [],
-    cur = "",
-    inQuotes = false;
+  let row = [], cur = "", inQuotes = false;
 
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
@@ -82,17 +105,17 @@ function parseCSV(text) {
     } else if (ch === '"') {
       inQuotes = !inQuotes;
     } else if (ch === "," && !inQuotes) {
-      row.push(cur);
-      cur = "";
+      row.push(cur); cur = "";
     } else if ((ch === "\n" || ch === "\r") && !inQuotes) {
       if (cur.length || row.length) {
-        row.push(cur);
-        cur = "";
+        row.push(cur); cur = "";
         if (ch === "\r" && next === "\n") i++;
         rows.push(row);
         row = [];
       }
-    } else cur += ch;
+    } else {
+      cur += ch;
+    }
   }
   if (cur.length || row.length) {
     row.push(cur);
@@ -101,25 +124,26 @@ function parseCSV(text) {
   return rows;
 }
 
-async function loadCSV(url) {
-  const finalUrl = url + (url.includes("?") ? "&" : "?") + "t=" + Date.now();
-  const res = await fetch(finalUrl, { cache: "no-store" });
-  if (!res.ok) throw new Error("No se pudo cargar el CSV: " + res.status);
+const CSV_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 
-  const text = await res.text();
-  if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
-    throw new Error(
-      "Google NO devolvió CSV (devolvió HTML). Revisa permisos o 'Publicar en la web'."
-    );
+async function loadCSV(url, cacheKey, { force=false } = {}) {
+  const cached = getLS(cacheKey);
+
+  if (!force && cached?.text && (Date.now() - cached.ts) < CSV_CACHE_TTL_MS) {
+    return cached.text;
   }
 
-  const data = parseCSV(text);
-  if (!data.length) throw new Error("CSV vacío.");
+  try {
+    const res = await fetch(url, { cache: "default" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
 
-  const headersRaw = data[0];
-  const headersNorm = headersRaw.map(normHeader);
-  const rows = data.slice(1).filter((r) => r.some((c) => safe(c) !== ""));
-  return { headersRaw, headersNorm, rows };
+    setLS(cacheKey, { ts: Date.now(), text });
+    return text;
+  } catch (e) {
+    if (cached?.text) return cached.text; // fallback último bueno
+    throw e;
+  }
 }
 
 function findIdx(headersNorm, candidates) {
@@ -135,15 +159,14 @@ function requireIdx(headersNorm, candidates, label, headersRaw) {
   if (i === -1) {
     throw new Error(
       `${label}: encabezado no encontrado.\n` +
-        `Busqué: ${candidates.join(", ")}\n` +
-        `Encabezados detectados: ${headersRaw.join(" | ")}`
+      `Busqué: ${candidates.join(", ")}\n` +
+      `Encabezados detectados: ${headersRaw.join(" | ")}`
     );
   }
   return i;
 }
 
 function lastNReversed(rows, n) {
-  // "El dato más actual es la última fila"
   return rows.slice(-n).reverse();
 }
 
@@ -152,42 +175,19 @@ function statusPill(txt) {
   if (t.includes("COMPLET")) return `<span class="status done">${t}</span>`;
   if (t.includes("CANCEL")) return `<span class="status cancelled">${t}</span>`;
   if (t.includes("DELAY")) return `<span class="status delayed">${t}</span>`;
-  if (t.includes("ON TIME") || t.includes("ONTIME"))
-    return `<span class="status ontime">${t}</span>`;
+  if (t.includes("ON TIME") || t.includes("ONTIME")) return `<span class="status ontime">${t}</span>`;
   return `<span class="status">${t || "—"}</span>`;
 }
 
-// ======= Renders =======
-
-// PROYECTOS: INSTITUCION | PROGRAMAS | PROYECTOS | ESTADO
+// ======= Render =======
 function renderProjects(headersNorm, headersRaw, rows) {
-  errProjects.style.display = "none";
+  setErr(errProjects, "");
   rowsProjects.innerHTML = "";
 
-  const iInst = requireIdx(
-    headersNorm,
-    ["institucion", "institution"],
-    "PROYECTOS/INSTITUCION",
-    headersRaw
-  );
-  const iProg = requireIdx(
-    headersNorm,
-    ["programas", "programa", "programs"],
-    "PROYECTOS/PROGRAMAS",
-    headersRaw
-  );
-  const iProy = requireIdx(
-    headersNorm,
-    ["proyectos", "proyecto", "projects", "project"],
-    "PROYECTOS/PROYECTOS",
-    headersRaw
-  );
-  const iEst = requireIdx(
-    headersNorm,
-    ["estado", "status"],
-    "PROYECTOS/ESTADO",
-    headersRaw
-  );
+  const iInst = requireIdx(headersNorm, ["institucion", "institution"], "PROYECTOS/INSTITUCION", headersRaw);
+  const iProg = requireIdx(headersNorm, ["programas", "programa", "programs"], "PROYECTOS/PROGRAMAS", headersRaw);
+  const iProy = requireIdx(headersNorm, ["proyectos", "proyecto", "projects", "project"], "PROYECTOS/PROYECTOS", headersRaw);
+  const iEst  = requireIdx(headersNorm, ["estado", "status"], "PROYECTOS/ESTADO", headersRaw);
 
   const viewRows = lastNReversed(rows, MAX_ROWS);
 
@@ -208,41 +208,15 @@ function renderProjects(headersNorm, headersRaw, rows) {
   countProjects.textContent = String(viewRows.length);
 }
 
-// VUELOS: FECHA | AERONAVE | TIPO DE VUELO | DESTINO | HORA DE SALIDA
 function renderFlights(headersNorm, headersRaw, rows) {
-  errFlights.style.display = "none";
+  setErr(errFlights, "");
   rowsFlights.innerHTML = "";
 
-  const iFecha = requireIdx(
-    headersNorm,
-    ["fecha", "date"],
-    "VUELOS/FECHA",
-    headersRaw
-  );
-  const iAero = requireIdx(
-    headersNorm,
-    ["aeronave", "aircraft", "airplane", "avion"],
-    "VUELOS/AERONAVE",
-    headersRaw
-  );
-  const iTipo = requireIdx(
-    headersNorm,
-    ["tipo_de_vuelo", "tipo_vuelo", "tipo", "flight_type"],
-    "VUELOS/TIPO DE VUELO",
-    headersRaw
-  );
-  const iDest = requireIdx(
-    headersNorm,
-    ["destino", "destination"],
-    "VUELOS/DESTINO",
-    headersRaw
-  );
-  const iHora = requireIdx(
-    headersNorm,
-    ["hora_de_salida", "hora_salida", "hora", "std", "time"],
-    "VUELOS/HORA DE SALIDA",
-    headersRaw
-  );
+  const iFecha = requireIdx(headersNorm, ["fecha", "date"], "VUELOS/FECHA", headersRaw);
+  const iAero  = requireIdx(headersNorm, ["aeronave", "aircraft", "airplane", "avion"], "VUELOS/AERONAVE", headersRaw);
+  const iTipo  = requireIdx(headersNorm, ["tipo_de_vuelo", "tipo_vuelo", "tipo", "flight_type"], "VUELOS/TIPO DE VUELO", headersRaw);
+  const iDest  = requireIdx(headersNorm, ["destino", "destination"], "VUELOS/DESTINO", headersRaw);
+  const iHora  = requireIdx(headersNorm, ["hora_de_salida", "hora_salida", "hora", "std", "time"], "VUELOS/HORA DE SALIDA", headersRaw);
 
   const viewRows = lastNReversed(rows, MAX_ROWS);
 
@@ -261,43 +235,35 @@ function renderFlights(headersNorm, headersRaw, rows) {
   countFlights.textContent = String(viewRows.length);
 }
 
-async function loadAll() {
-  // PROYECTOS
-  try {
-    const p = await loadCSV(PROJECTS_CSV_URL);
-    renderProjects(p.headersNorm, p.headersRaw, p.rows);
-  } catch (e) {
-    rowsProjects.innerHTML = "";
-    countProjects.textContent = "0";
-    errProjects.textContent = "Error: " + (e?.message || e);
-    errProjects.style.display = "block";
+async function loadAll({ force=false } = {}){
+  try{
+    const projectsCSV = await loadCSV(PROJECTS_CSV_URL, "csv:projects", { force });
+    const parsedP = parseCSV(projectsCSV);
+    const headersRawP = parsedP[0] || [];
+    const rowsP = parsedP.slice(1);
+    const headersNormP = headersRawP.map(normHeader);
+    renderProjects(headersNormP, headersRawP, rowsP);
+  } catch(e){
+    setErr(errProjects, "No se pudo cargar Proyectos (sin cache disponible).");
   }
 
-  // VUELOS
-  try {
-    const f = await loadCSV(FLIGHTS_CSV_URL);
-    renderFlights(f.headersNorm, f.headersRaw, f.rows);
-  } catch (e) {
-    rowsFlights.innerHTML = "";
-    countFlights.textContent = "0";
-    errFlights.textContent = "Error: " + (e?.message || e);
-    errFlights.style.display = "block";
+  try{
+    const flightsCSV = await loadCSV(FLIGHTS_CSV_URL, "csv:flights", { force });
+    const parsedF = parseCSV(flightsCSV);
+    const headersRawF = parsedF[0] || [];
+    const rowsF = parsedF.slice(1);
+    const headersNormF = headersRawF.map(normHeader);
+    renderFlights(headersNormF, headersRawF, rowsF);
+  } catch(e){
+    setErr(errFlights, "No se pudo cargar Vuelos (sin cache disponible).");
   }
 
-  elLast.textContent = new Date().toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
-  });
+  setLastUpdate(new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}));
 }
 
-// ======= Fullscreen + audio unlock =======
+// ======= Fullscreen =======
 function isFullscreen() {
-  return (
-    document.fullscreenElement ||
-    document.webkitFullscreenElement ||
-    document.msFullscreenElement
-  );
+  return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
 }
 function requestFs(el) {
   if (el.requestFullscreen) return el.requestFullscreen();
@@ -320,13 +286,11 @@ function updateFsBtn() {
 }
 btnFs?.addEventListener("click", async () => {
   try {
-    audioUnlocked = true; // gesto de usuario
+    audioUnlocked = true;
     if (!isFullscreen()) await requestFs(document.documentElement);
     else await exitFs();
     updateFsBtn();
-  } catch (e) {
-    // nada
-  }
+  } catch {}
 });
 document.addEventListener("fullscreenchange", updateFsBtn);
 document.addEventListener("webkitfullscreenchange", updateFsBtn);
@@ -349,12 +313,7 @@ async function resolveUrl(path, buster) {
 }
 
 function buildPlaylist(manifest) {
-  const items = [];
-
-  // 1) Board siempre primero
-  items.push({ type: "board", durationMs: 30000 });
-
-  // 2) Slots habilitados
+  const items = [{ type: "board", durationMs: 30000 }];
   const slots = Array.isArray(manifest?.slots) ? manifest.slots : [];
   for (const s of slots) {
     if (!s?.enabled || !s?.path) continue;
@@ -367,23 +326,32 @@ function buildPlaylist(manifest) {
       cacheBuster: s.cacheBuster || null
     });
   }
-
   return items;
 }
+const MANIFEST_CACHE_TTL_MS = 60 * 1000; // 1 minuto
 
-async function refreshManifest() {
-  try {
-    const m = await readManifest();
-    const raw = JSON.stringify(m);
-    if (raw !== manifestRaw) {
-      manifestRaw = raw;
-      manifestCache = m;
-      urlCache.clear();
+async function refreshManifest({ force=false } = {}){
+  try{
+    if (!force) {
+      const cached = getLS("cache:manifest");
+      if (cached?.data && cached?.ts && (Date.now() - cached.ts) < MANIFEST_CACHE_TTL_MS) {
+        manifestCache = cached.data;
+        return;
+      }
     }
-  } catch (_) {
-    manifestCache = null;
+
+    manifestCache = await readManifest({ fallbackToDefault: true });
+    setLS("cache:manifest", { ts: Date.now(), data: manifestCache });
+  } catch (e) {
+    const cached = getLS("cache:manifest");
+    if (cached?.data) {
+      manifestCache = cached.data;
+      return;
+    }
+    console.warn("refreshManifest failed:", e);
   }
 }
+
 
 function stopBoardRefresh() {
   if (boardRefreshTimer) {
@@ -391,10 +359,12 @@ function stopBoardRefresh() {
     boardRefreshTimer = null;
   }
 }
-function startBoardRefresh() {
-  if (boardRefreshTimer) return;
+function startBoardRefresh(){
+  stopBoardRefresh();
   loadAll();
-  boardRefreshTimer = setInterval(loadAll, REFRESH_SECONDS * 1000);
+  if (REFRESH_SECONDS > 0) {
+    boardRefreshTimer = setInterval(loadAll, REFRESH_SECONDS * 1000);
+  }
 }
 
 function showBoard() {
@@ -472,7 +442,7 @@ async function showMedia(item) {
       mediaLoading.querySelector("span").textContent = audioUnlocked
         ? "Reproduciendo (audio bloqueado por el navegador)"
         : "Audio bloqueado: presiona ⛶ en la tabla";
-    } catch (_) {
+    } catch {
       mediaLoading.querySelector("span").textContent = "Error reproduciendo video";
     }
   }
@@ -508,21 +478,40 @@ async function next() {
 
   try {
     await showMedia(item);
-  } catch (_) {
+  } catch {
     showBoard();
     scheduleNext(30000);
   }
 }
 
-async function start() {
-  showBoard();
+// ======= Update button =======
+btnUpdate?.addEventListener("click", async () => {
+  try {
+    btnUpdate.disabled = true;
+    const oldTitle = btnUpdate.title;
+    btnUpdate.title = "Actualizando…";
 
-  await refreshManifest();
+    await loadAll({ force: true });
+    await refreshManifest({ force: true });
 
-  currentIndex = 0; // board
-  scheduleNext(30000);
+    if (playlistTimer) clearTimeout(playlistTimer);
+    currentIndex = -1;
+    await next();
 
-  setInterval(refreshManifest, 60000);
-}
+    btnUpdate.title = oldTitle;
+  } catch (e) {
+    btnUpdate.title = "Error al actualizar";
+    setTimeout(() => (btnUpdate.title = "Actualizar datos e imágenes"), 1500);
+  } finally {
+    btnUpdate.disabled = false;
+  }
+});
 
-start();
+// ======= BOOTSTRAP =======
+(async function bootstrap(){
+  setRefreshLabel();
+  await loadAll({ force: false });
+  await refreshManifest({ force: false });
+  currentIndex = -1;
+  await next();
+})();

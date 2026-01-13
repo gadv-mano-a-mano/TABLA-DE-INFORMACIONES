@@ -17,11 +17,17 @@
           <div>INFO BOARD</div>
         </div>
 
-        <button id="btnFs" class="fsbtn" type="button" aria-label="Pantalla completa" title="Pantalla completa">⛶</button>
+        <!-- Acciones al lado de fullscreen -->
+        <div class="headerActions" id="topActions">
+          <button class="fsbtn" id="btnUpdate" title="Actualizar datos e imágenes">↻</button>
+          <a class="fsbtn" id="btnAdmin" href="./admin/" target="_blank" rel="noopener" title="Admin">👤</a>
+          <a class="fsbtn" id="btnSheets" href="https://docs.google.com/spreadsheets/d/1Jm40tcFgDjnhsUUg6j7By1ZA3oivJhU0qgP10BdSMT0/edit?gid=2103036915#gid=2103036915" target="_blank" rel="noopener" title="Sheets">📊</a>
+          <button id="btnFs" class="fsbtn" type="button" aria-label="Pantalla completa" title="Pantalla completa">⛶</button>
+        </div>
 
         <div class="meta">
           <div id="now"></div>
-          <div>Auto-refresh: <span id="refreshEvery"></span>s</div>
+          <div>Auto-refresh: <span id="refreshEvery"></span></div>
         </div>
       </div>
 

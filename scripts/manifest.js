@@ -10,6 +10,7 @@ import {
 import { storage } from "./firebase.js";
 
 export const MANIFEST_PATH = "carousel/manifest.json";
+const MAX_MANIFEST_BYTES = 512 * 1024;
 
 // ===== Slots: 25 imágenes + 2 videos =====
 const IMAGE_SLOTS = 25;
@@ -43,21 +44,92 @@ export function defaultManifest() {
   };
 }
 
-export async function readManifest() {
+function isMissingStorageObject(error) {
+  return error?.code === "storage/object-not-found";
+}
+
+function normalizeManifest(manifest) {
+  const base = defaultManifest();
+  const definedIds = new Set(base.slots.map((slot) => slot.id));
+
+  const mergedSlots = base.slots.map((slot) => {
+    const override = manifest.slots?.find((s) => s.id === slot.id);
+    return override ? { ...slot, ...override } : slot;
+  });
+
+  const extraSlots = Array.isArray(manifest.slots)
+    ? manifest.slots.filter((slot) => !definedIds.has(slot.id))
+    : [];
+
+  return {
+    ...base,
+    ...manifest,
+    board: { ...base.board, ...(manifest.board ?? {}) },
+    slots: [...mergedSlots, ...extraSlots]
+  };
+}
+
+/**
+ * IMPORTANTE:
+ * - readManifest() SOLO LEE.
+ * - NO crea ni sobrescribe manifest automáticamente.
+ * - Si falta y fallbackToDefault=true, devuelve default en memoria.
+ */
+export async function readManifest(options = {}) {
+  const { fallbackToDefault = true, normalize = true } = {
+    fallbackToDefault: true,
+    normalize: true,
+    ...options
+  };
+
   const mref = ref(storage, MANIFEST_PATH);
-  const bytes = await getBytes(mref, 256 * 1024);
-  const text = new TextDecoder().decode(bytes);
-  return JSON.parse(text);
+
+  try {
+    const bytes = await getBytes(mref, MAX_MANIFEST_BYTES);
+    const text = new TextDecoder().decode(bytes);
+
+    // Si por algún motivo llega vacío/no texto JSON
+    if (!text || !text.trim()) {
+      const err = new Error("Manifest vacío o ilegible (contenido vacío).");
+      err.code = "manifest/empty";
+      throw err;
+    }
+
+    const parsed = JSON.parse(text);
+    return normalize ? normalizeManifest(parsed) : parsed;
+  } catch (error) {
+    // Si NO existe, opcionalmente devolvemos default (SIN escribir en Firebase)
+    if (isMissingStorageObject(error)) {
+      if (fallbackToDefault) return defaultManifest();
+      throw error;
+    }
+
+    // Si el JSON es inválido, NUNCA lo sobreescribimos automáticamente
+    if (error instanceof SyntaxError) {
+      const err = new Error("Manifest JSON inválido. No se sobrescribe automáticamente.");
+      err.code = "manifest/invalid-json";
+      throw err;
+    }
+
+    // Si es un error de “contenido vacío”
+    if (error?.code === "manifest/empty") {
+      throw error;
+    }
+
+    throw error;
+  }
 }
 
 export async function writeManifest(manifest) {
   const mref = ref(storage, MANIFEST_PATH);
   const data = new TextEncoder().encode(JSON.stringify(manifest, null, 2));
+
   // manifest: no-cache para cambios rápidos en público
   await uploadBytes(mref, data, {
     contentType: "application/json",
     cacheControl: "no-cache"
   });
+
   return true;
 }
 

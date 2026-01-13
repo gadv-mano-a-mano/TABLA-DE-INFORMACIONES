@@ -31,6 +31,7 @@ body{
   display:flex;
   align-items:center;
   justify-content:space-between;
+  gap: 14px;
   padding: 16px 18px;
   background: linear-gradient(180deg,#1b1b1b,#0f0f0f);
   border: 1px solid #2b2b2b;
@@ -58,6 +59,21 @@ body{
   font-size: 12px;
   color: var(--muted);
   line-height:1.4;
+  white-space: nowrap;
+}
+
+.headerActions{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+/* Links como botones */
+a.fsbtn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
 }
 
 /* ===== Boards ===== */
@@ -112,7 +128,7 @@ tbody td{
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-  max-width: 1px; /* activa ellipsis en celdas flexibles */
+  max-width: 1px;
 }
 tbody tr:last-child td{ border-bottom:0; }
 
@@ -177,8 +193,15 @@ tbody tr:last-child td{ border-bottom:0; }
   outline-offset:2px;
 }
 
-/* Discreto en fullscreen */
-body.is-fs .fsbtn{
+/* En fullscreen: SOLO dejamos visible el botón de salir (⤡/⛶) */
+body.is-fs #btnUpdate,
+body.is-fs #btnAdmin,
+body.is-fs #btnSheets{
+  display:none;
+}
+
+/* Discreto en fullscreen (solo btnFs) */
+body.is-fs #btnFs{
   position:fixed;
   top:10px;
   right:10px;
@@ -188,8 +211,8 @@ body.is-fs .fsbtn{
   background:transparent;
   border-color:transparent;
 }
-body.is-fs .fsbtn:hover,
-body.is-fs .fsbtn:focus-visible{
+body.is-fs #btnFs:hover,
+body.is-fs #btnFs:focus-visible{
   opacity:.75;
   background:#0c0c0c;
   border-color:#2b2b2b;
@@ -274,9 +297,7 @@ body[data-screen="media"] #btnFs{ display:none; }
 
 label{ font-size:12px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; }
 
-input, select, button{
-  font: inherit;
-}
+input, select, button{ font: inherit; }
 
 input[type="file"], select{
   width:100%;
@@ -354,44 +375,47 @@ input[type="file"], select{
 }
 .pill.on{ border-color:#235a23; color:var(--ok); }
 .pill.off{ border-color:#5a2222; color:#ffb3b3; }
-/* PROYECTOS: columna "PROYECTOS" (4ta) alineada a la derecha */
+
+/* PROYECTOS: columna "ESTADO" (4ta) alineada a la derecha */
 #boardScreen .board.first table tbody td:nth-child(4),
 #boardScreen .board.first table thead th:nth-child(4){
   text-align: right;
 }
-html, body{
-  height: 100%;
-  overflow: hidden; /* evita scroll que en TV se siente como recorte */
+
+/* =========================================================
+   Ajustes “TV / overscan” SOLO para el BOARD (no Admin)
+   ========================================================= */
+body[data-screen="board"]{
+  overflow: hidden;
+  --safe-bottom: 32px;
 }
 
-/* menos márgenes exteriores (el margin:24px suele causar recorte en TV) */
-.wrap{
+body[data-screen="board"] .wrap{
   margin: 0 auto;
   padding: 12px 14px;
+  padding-bottom: var(--safe-bottom);
   max-width: 100%;
 }
 
-/* cuando la pantalla es baja (típico 720p/TV) compactamos */
 @media (max-height: 800px){
-  .header{ padding: 12px 14px; }
-  .board{ padding: 12px; }
-  table{ font-size: 16px; }
-  th, td{ padding: 10px 10px; }
+  body[data-screen="board"]{ --safe-bottom: 48px; }
+  body[data-screen="board"] .header{ padding: 12px 14px; }
+  body[data-screen="board"] table{ font-size: 16px; }
+  body[data-screen="board"] th,
+  body[data-screen="board"] td{ padding: 10px 10px; }
 }
 
 @media (max-height: 720px){
-  table{ font-size: 14px; }
-  th, td{ padding: 8px 8px; }
-}
-:root{
-  --safe-bottom: 32px; /* sube a 48px si sigue cortando */
+  body[data-screen="board"] table{ font-size: 14px; }
+  body[data-screen="board"] th,
+  body[data-screen="board"] td{ padding: 8px 8px; }
 }
 
-.wrap{
-  padding-bottom: var(--safe-bottom);
-}
+/* Ocultar acciones cuando el navegador entra a fullscreen “real” */
+:fullscreen .headerActions #btnUpdate,
+:fullscreen .headerActions #btnAdmin,
+:fullscreen .headerActions #btnSheets{ display:none; }
 
-/* En pantallas bajas (TVs 720p o con overscan fuerte) */
-@media (max-height: 800px){
-  :root{ --safe-bottom: 48px; }
-}
+:-webkit-full-screen .headerActions #btnUpdate,
+:-webkit-full-screen .headerActions #btnAdmin,
+:-webkit-full-screen .headerActions #btnSheets{ display:none; }
